@@ -97,16 +97,21 @@ export async function POST(
 
     if (existingConversation) {
       conversationId = existingConversation.id;
-      // Update conversation
+      // Update conversation metadata
       await supabase
         .from("conversations")
         .update({
           last_message_at: new Date().toISOString(),
           last_message_preview: body.substring(0, 100),
-          unread_count: 1, // TODO: Use RPC to increment atomically
           status: "open",
         })
         .eq("id", conversationId);
+
+      // Atomically increment unread count to prevent race conditions
+      await supabase.rpc("increment_unread_count", {
+        p_conversation_id: conversationId,
+        p_increment: 1,
+      });
     } else {
       // Create new conversation
       const { data: newConversation, error: convError } = await supabase
