@@ -3,11 +3,11 @@
   "crons": [
     {
       "path": "/api/reviews/process-drip",
-      "schedule": "0 */2 * * *"
+      "schedule": "0 9 * * *"
     },
     {
       "path": "/api/reviews/process-campaigns",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 10 * * *"
     }
   ]
 }
