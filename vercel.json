@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/reviews/process-drip",
+      "schedule": "0 */2 * * *"
+    },
+    {
+      "path": "/api/reviews/process-campaigns",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
