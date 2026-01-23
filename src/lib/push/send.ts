@@ -24,17 +24,23 @@ interface PushPayload {
 
 /**
  * Send push notification to a contractor
+ * @param contractorId - The contractor to notify
+ * @param payload - The notification payload
+ * @param supabaseClient - Optional Supabase client (uses server client if not provided)
  */
 export async function sendPushNotification(
   contractorId: string,
-  payload: PushPayload
+  payload: PushPayload,
+  supabaseClient?: unknown
 ): Promise<{ success: number; failed: number }> {
   if (!vapidPublicKey || !vapidPrivateKey) {
     console.warn("VAPID keys not configured, skipping push notification");
     return { success: 0, failed: 0 };
   }
 
-  const supabase = await createClient();
+  // Cast to a type with the methods we need (supports both typed and untyped clients)
+  // eslint-disable-next-line
+  const supabase = (supabaseClient || await createClient()) as any;
 
   // Get all subscriptions for this contractor
   const { data: subsData } = await supabase
@@ -86,7 +92,8 @@ export async function sendPushNotification(
 export async function notifyNewMessage(
   contractorId: string,
   senderName: string,
-  preview: string
+  preview: string,
+  supabaseClient?: unknown
 ): Promise<void> {
   await sendPushNotification(contractorId, {
     title: `New message from ${senderName}`,
@@ -97,7 +104,7 @@ export async function notifyNewMessage(
       { action: "open", title: "Reply" },
       { action: "dismiss", title: "Dismiss" },
     ],
-  });
+  }, supabaseClient);
 }
 
 /**
@@ -105,14 +112,15 @@ export async function notifyNewMessage(
  */
 export async function notifyMissedCall(
   contractorId: string,
-  callerPhone: string
+  callerPhone: string,
+  supabaseClient?: unknown
 ): Promise<void> {
   await sendPushNotification(contractorId, {
     title: "Missed Call",
     body: `You missed a call from ${callerPhone}`,
     url: "/inbox",
     tag: "missed-call",
-  });
+  }, supabaseClient);
 }
 
 /**
@@ -121,7 +129,8 @@ export async function notifyMissedCall(
 export async function notifyReviewResponse(
   contractorId: string,
   contactName: string,
-  rating: number
+  rating: number,
+  supabaseClient?: unknown
 ): Promise<void> {
   const isPositive = rating >= 4;
   await sendPushNotification(contractorId, {
@@ -129,5 +138,5 @@ export async function notifyReviewResponse(
     body: `${contactName} rated you ${rating}/5`,
     url: "/reviews",
     tag: "review-response",
-  });
+  }, supabaseClient);
 }

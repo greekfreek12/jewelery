@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createApiServiceClient } from "@/lib/supabase/api-client";
 import { emptyTwiml, parseFormData, smsReplyTwiml } from "@/lib/textgrid/webhook";
 import { parseRatingFromMessage, renderTemplate } from "@/lib/reviews/templates";
+import { notifyNewMessage, notifyReviewResponse } from "@/lib/push/send";
 
 /**
  * Incoming SMS webhook from TextGrid
@@ -262,11 +263,32 @@ export async function POST(
               rating,
             },
           });
+
+          // Send push notification for review response
+          notifyReviewResponse(
+            contractorId,
+            contactData?.name || from,
+            rating,
+            supabase
+          ).catch((err) => console.error("Review notification failed:", err));
         }
       }
     }
 
-    // TODO: Send push notification to contractor
+    // Send push notification to contractor (async, don't block response)
+    // Get contact name for notification
+    const { data: contactForPush } = await supabase
+      .from("contacts")
+      .select("name")
+      .eq("id", contactId)
+      .single();
+
+    notifyNewMessage(
+      contractorId,
+      contactForPush?.name || from,
+      body,
+      supabase
+    ).catch((err) => console.error("Push notification failed:", err));
 
     // Return TwiML with auto-reply if we have one
     if (autoReplyMessage) {
