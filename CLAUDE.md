@@ -161,6 +161,28 @@ const { data } = await supabase
 - Generated types in `src/types/database.ts`
 - Re-run `supabase gen types typescript` after schema changes
 
+### Running Migrations
+Migrations are in `supabase/migrations/`. Run them with psql:
+
+```bash
+# Get password from DATABASE_URL in .env.local
+PGPASSWORD="YOUR_PASSWORD" psql "postgresql://postgres.veeynxpptwxjuxitwyif@aws-1-us-east-2.pooler.supabase.com:6543/postgres" -f supabase/migrations/XXX_name.sql
+```
+
+Or parse it automatically:
+```bash
+# Extract password and run migration
+DB_URL=$(grep DATABASE_URL .env.local | cut -d= -f2-)
+PGPASSWORD=$(echo $DB_URL | sed 's/.*:\([^@]*\)@.*/\1/') psql "postgresql://postgres.veeynxpptwxjuxitwyif@aws-1-us-east-2.pooler.supabase.com:6543/postgres" -f supabase/migrations/005_admin_controls.sql
+```
+
+**Migration files:**
+- `001_initial_schema.sql` - Core tables, RLS, triggers
+- `002_enable_realtime.sql` - Realtime subscriptions
+- `003_push_subscriptions.sql` - Web push notification storage
+- `004_atomic_unread_increment.sql` - RPC for atomic counter updates
+- `005_admin_controls.sql` - Suspension, feature locks, admin RLS policies
+
 ## Admin Panel Structure
 
 Admin pages are in `src/app/(admin)/admin/`:
