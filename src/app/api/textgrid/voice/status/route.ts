@@ -15,27 +15,34 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const data = parseFormData(formData);
 
-    console.log("Status webhook data:", JSON.stringify(data, null, 2));
+    console.log("=== STATUS WEBHOOK DATA (ALL PARAMS) ===");
+    console.log(JSON.stringify(data, null, 2));
+    console.log("=========================================");
 
     const callSid = data.CallSid;
     const dialCallStatus = data.DialCallStatus; // completed, no-answer, busy, failed
+    const dialCallDuration = parseInt(data.DialCallDuration || "0", 10); // Duration in seconds
     const from = data.From; // Original caller
     const to = data.To; // Business number (contractor's TextGrid number)
 
-    console.log(`Call status: ${dialCallStatus} for call ${callSid}, from: ${from}, to: ${to}`);
+    console.log(`Call status: ${dialCallStatus}, duration: ${dialCallDuration}s, from: ${from}, to: ${to}`);
 
-    // If call was answered by a human (short duration likely means voicemail)
-    // We'll still send auto-text and offer voicemail for "completed" calls under 20 seconds
-    // This catches cases where carrier voicemail picked up
-    if (dialCallStatus === "completed") {
-      // TODO: Could check call duration here if TextGrid provides it
-      // For now, trust "completed" means actually answered
+    // If call was answered AND talked for more than 15 seconds, it's a real answer
+    // Short "completed" calls are likely carrier voicemail answering
+    if (dialCallStatus === "completed" && dialCallDuration > 15) {
+      console.log(`Real answer detected (duration: ${dialCallDuration}s > 15s), not sending auto-text`);
       return new NextResponse(emptyTwiml(), {
         headers: { "Content-Type": "text/xml" },
       });
     }
 
-    // Call was missed (no-answer, busy, failed)
+    // If completed but short duration (< 15 sec), treat as voicemail pickup
+    if (dialCallStatus === "completed" && dialCallDuration <= 15) {
+      console.log(`Short "completed" call (${dialCallDuration}s) - likely carrier voicemail, treating as missed`);
+      // Fall through to missed call handling below
+    }
+
+    // Call was missed: no-answer, busy, failed, OR short "completed" (carrier voicemail)
     const supabase = createApiServiceClient();
 
     // Find contractor by their TextGrid phone number
@@ -52,14 +59,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Log missed call
+    // Log missed call with duration info
     await supabase.from("analytics_events").insert({
       contractor_id: contractor.id,
       event_type: "call_missed",
       metadata: {
         from,
         dial_status: dialCallStatus,
+        dial_duration: dialCallDuration,
         call_sid: callSid,
+        reason: dialCallStatus === "completed" ? "carrier_voicemail_likely" : dialCallStatus,
       },
     });
 

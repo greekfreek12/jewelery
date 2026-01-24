@@ -128,7 +128,7 @@ export async function POST(
       const twiml = forwardCallTwiml(
         contractor.forwarding_number,
         from,  // Show original caller ID to contractor (not business number)
-        18,   // Short timeout - end BEFORE carrier voicemail picks up (~25 sec)
+        12,   // Very short timeout - MUST end before carrier voicemail (~20-25 sec)
         statusCallbackUrl  // Absolute URL for TextGrid callback
       );
 
