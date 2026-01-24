@@ -139,30 +139,10 @@ function OverviewTab({
           </div>
           <div className="admin-section-body">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <HealthMetric
-                label="Messages Sent"
-                value={stats.messages}
-                trend={12}
-                trendUp
-              />
-              <HealthMetric
-                label="Contacts"
-                value={stats.contacts}
-                trend={5}
-                trendUp
-              />
-              <HealthMetric
-                label="Review Requests"
-                value={stats.reviewRequests}
-                trend={8}
-                trendUp
-              />
-              <HealthMetric
-                label="Conversations"
-                value={stats.conversations}
-                trend={-2}
-                trendUp={false}
-              />
+              <MetricCard label="Messages Sent" value={stats.messages} />
+              <MetricCard label="Contacts" value={stats.contacts} />
+              <MetricCard label="Review Requests" value={stats.reviewRequests} />
+              <MetricCard label="Conversations" value={stats.conversations} />
             </div>
           </div>
         </div>
@@ -1206,24 +1186,11 @@ function ActivityTab({ recentActivity }: { recentActivity: ActivityEvent[] }) {
 // HELPER COMPONENTS
 // ============================================
 
-function HealthMetric({
-  label,
-  value,
-  trend,
-  trendUp,
-}: {
-  label: string;
-  value: number;
-  trend: number;
-  trendUp: boolean;
-}) {
+function MetricCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="metric-card">
-      <p className="metric-value">{value.toLocaleString()}</p>
-      <p className="metric-label">{label}</p>
-      <span className={trendUp ? "metric-trend-up" : "metric-trend-down"}>
-        {trendUp ? "↑" : "↓"} {Math.abs(trend)}%
-      </span>
+    <div className="bg-slate-50 rounded-lg p-4">
+      <p className="text-2xl font-bold text-slate-900">{value.toLocaleString()}</p>
+      <p className="text-sm text-slate-500">{label}</p>
     </div>
   );
 }

@@ -1,0 +1,67 @@
+{
+  "name": "Housecall Pro → Review Request",
+  "description": "Sends review request when job is completed in Housecall Pro",
+  "flow": [
+    {
+      "id": 1,
+      "module": "housecallpro:watchUpdatedJobs",
+      "label": "Watch Updated Jobs",
+      "config": {
+        "connection": "{{HCP_CONNECTION}}",
+        "status": "completed",
+        "notes": "Watches for jobs that change to 'completed' status"
+      }
+    },
+    {
+      "id": 2,
+      "module": "housecallpro:getCustomer",
+      "label": "Get Customer Details",
+      "config": {
+        "connection": "{{HCP_CONNECTION}}",
+        "customerId": "{{job.customer.id}}",
+        "notes": "Fetch full customer details including phone number"
+      }
+    },
+    {
+      "id": 3,
+      "module": "http:makeRequest",
+      "label": "Send to Review Webhook",
+      "config": {
+        "method": "POST",
+        "url": "https://yourapp.com/api/webhooks/trigger-review/{{CONTRACTOR_ID}}",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "contact_phone": "{{customer.phone}}",
+          "contact_name": "{{customer.first_name}} {{customer.last_name}}",
+          "contact_email": "{{customer.email}}",
+          "job_type": "{{job.name}}",
+          "tech_name": "{{job.assigned_employee.name}}",
+          "source": "housecall_pro"
+        }
+      }
+    }
+  ],
+  "setup_instructions": {
+    "step_1": "Import this blueprint into Make.com",
+    "step_2": "Click the Housecall Pro module and connect contractor's HCP account",
+    "step_3": "Set the status filter to 'completed'",
+    "step_4": "In the HTTP module, replace 'yourapp.com' with your actual domain",
+    "step_5": "Replace '{{CONTRACTOR_ID}}' with the contractor's UUID",
+    "step_6": "Turn on the scenario and set schedule to every 15 minutes",
+    "step_7": "Test by completing a job in Housecall Pro"
+  },
+  "field_mapping": {
+    "contact_phone": "Customer's phone from HCP",
+    "contact_name": "Customer's full name from HCP",
+    "contact_email": "Customer's email (optional)",
+    "job_type": "Job name/type from HCP",
+    "tech_name": "Assigned employee's name",
+    "source": "Always 'housecall_pro' for tracking"
+  },
+  "notes": {
+    "polling": "Housecall Pro uses polling (not instant webhooks). Set to run every 15 minutes.",
+    "status_filter": "The 'completed' status is set in the module config, not a separate filter."
+  }
+}

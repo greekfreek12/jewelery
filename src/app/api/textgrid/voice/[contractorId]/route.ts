@@ -121,12 +121,26 @@ export async function POST(
         },
       });
 
-      return new NextResponse(
-        forwardCallTwiml(contractor.forwarding_number, to, 30),
-        {
-          headers: { "Content-Type": "text/xml" },
-        }
+      // Build absolute URL for status callback (TextGrid needs full URL)
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+      const statusCallbackUrl = `${baseUrl}/api/textgrid/voice/status`;
+
+      const twiml = forwardCallTwiml(
+        contractor.forwarding_number,
+        from,  // Show original caller ID to contractor (not business number)
+        18,   // Short timeout - end BEFORE carrier voicemail picks up (~25 sec)
+        statusCallbackUrl  // Absolute URL for TextGrid callback
       );
+
+      console.log("=== VOICE WEBHOOK DEBUG ===");
+      console.log("Forwarding to:", contractor.forwarding_number);
+      console.log("Status callback URL:", statusCallbackUrl);
+      console.log("TwiML response:", twiml);
+      console.log("===========================");
+
+      return new NextResponse(twiml, {
+        headers: { "Content-Type": "text/xml" },
+      });
     }
 
     // No forwarding number - play missed call message

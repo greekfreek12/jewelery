@@ -34,7 +34,12 @@ export interface IncomingSmsWebhook {
 export function parseFormData(formData: FormData): Record<string, string> {
   const result: Record<string, string> = {};
   formData.forEach((value, key) => {
-    result[key] = value.toString();
+    let val = value.toString();
+    // Fix phone numbers - if it starts with a space, it was a + that got URL-decoded wrong
+    if ((key === "From" || key === "To") && val.startsWith(" ")) {
+      val = "+" + val.trim();
+    }
+    result[key] = val;
   });
   return result;
 }
@@ -83,16 +88,22 @@ export function smsReplyTwiml(message: string): string {
 
 /**
  * Generate call forwarding TwiML
+ * @param forwardingNumber - The number to forward calls to (contractor's cell)
+ * @param callerId - The original caller's number (so contractor sees who's calling)
+ * @param timeout - How long to ring before giving up
+ * @param statusCallbackUrl - ABSOLUTE URL for TextGrid to call after dial completes
  */
 export function forwardCallTwiml(
   forwardingNumber: string,
   callerId?: string,
-  timeout: number = 30
+  timeout: number = 30,
+  statusCallbackUrl?: string
 ): string {
   const callerIdAttr = callerId ? ` callerId="${callerId}"` : "";
+  const actionAttr = statusCallbackUrl ? ` action="${statusCallbackUrl}"` : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Dial${callerIdAttr} timeout="${timeout}" action="/api/textgrid/voice/status">
+  <Dial${callerIdAttr} timeout="${timeout}"${actionAttr}>
     <Number>${forwardingNumber}</Number>
   </Dial>
 </Response>`;
@@ -100,12 +111,15 @@ export function forwardCallTwiml(
 
 /**
  * Generate voicemail TwiML
+ * @param businessName - Name to say in the greeting
+ * @param recordingCallbackUrl - ABSOLUTE URL for recording callback
  */
-export function voicemailTwiml(businessName: string): string {
+export function voicemailTwiml(businessName: string, recordingCallbackUrl?: string): string {
+  const actionAttr = recordingCallbackUrl ? ` action="${recordingCallbackUrl}"` : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say voice="alice">You've reached ${escapeXml(businessName)}. We're sorry we missed your call. Please leave a message after the beep, or we'll text you back shortly.</Say>
-  <Record maxLength="120" action="/api/textgrid/voice/recording" />
+  <Record maxLength="120"${actionAttr} />
 </Response>`;
 }
 

@@ -49,22 +49,31 @@ export async function updateSession(request: NextRequest) {
 
   // Check subscription status for protected routes
   if (isProtectedPath && user) {
-    const { data: contractor } = await supabase
+    const { data: contractor, error: contractorError } = await supabase
       .from("contractors")
       .select("subscription_status, is_admin")
       .eq("id", user.id)
       .single();
 
+    // DEBUG: Log what we're getting
+    console.log("[Middleware] User ID:", user.id);
+    console.log("[Middleware] Contractor data:", contractor);
+    console.log("[Middleware] Contractor error:", contractorError);
+
     // Admins bypass subscription check
     if (contractor?.is_admin) {
+      console.log("[Middleware] Admin detected, bypassing subscription check");
       return supabaseResponse;
     }
 
     const activeStatuses = ["trialing", "active"];
     const hasActiveSubscription = contractor && activeStatuses.includes(contractor.subscription_status || "");
 
+    console.log("[Middleware] Has active subscription:", hasActiveSubscription);
+
     // Allow settings page for billing management
     if (!hasActiveSubscription && !request.nextUrl.pathname.startsWith("/settings")) {
+      console.log("[Middleware] Redirecting to pricing - no active subscription");
       const url = request.nextUrl.clone();
       url.pathname = "/pricing";
       url.searchParams.set("subscription", "required");
@@ -79,8 +88,15 @@ export async function updateSession(request: NextRequest) {
   );
 
   if (isAuthPath && user) {
+    // Check if user is admin and redirect accordingly
+    const { data: userData } = await supabase
+      .from("contractors")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = userData?.is_admin ? "/admin" : "/dashboard";
     return NextResponse.redirect(url);
   }
 

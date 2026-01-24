@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createApiServiceClient } from "@/lib/supabase/api-client";
-import { parseFormData, emptyTwiml } from "@/lib/textgrid/webhook";
+import { parseFormData, emptyTwiml, voicemailTwiml } from "@/lib/textgrid/webhook";
 import { sendSms } from "@/lib/textgrid/client";
 
 /**
@@ -9,19 +9,27 @@ import { sendSms } from "@/lib/textgrid/client";
  * URL: /api/textgrid/voice/status
  */
 export async function POST(request: NextRequest) {
+  console.log("=== STATUS WEBHOOK HIT ===");
+
   try {
     const formData = await request.formData();
     const data = parseFormData(formData);
+
+    console.log("Status webhook data:", JSON.stringify(data, null, 2));
 
     const callSid = data.CallSid;
     const dialCallStatus = data.DialCallStatus; // completed, no-answer, busy, failed
     const from = data.From; // Original caller
     const to = data.To; // Business number (contractor's TextGrid number)
 
-    console.log(`Call status: ${dialCallStatus} for call ${callSid}`);
+    console.log(`Call status: ${dialCallStatus} for call ${callSid}, from: ${from}, to: ${to}`);
 
-    // If call was answered, nothing to do
+    // If call was answered by a human (short duration likely means voicemail)
+    // We'll still send auto-text and offer voicemail for "completed" calls under 20 seconds
+    // This catches cases where carrier voicemail picked up
     if (dialCallStatus === "completed") {
+      // TODO: Could check call duration here if TextGrid provides it
+      // For now, trust "completed" means actually answered
       return new NextResponse(emptyTwiml(), {
         headers: { "Content-Type": "text/xml" },
       });
@@ -135,9 +143,15 @@ export async function POST(request: NextRequest) {
       console.error("Failed to send missed call auto-text:", smsError);
     }
 
-    return new NextResponse(emptyTwiml(), {
-      headers: { "Content-Type": "text/xml" },
-    });
+    // Return voicemail TwiML so caller can leave a message
+    const webhookBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+    const recordingCallbackUrl = `${webhookBaseUrl}/api/textgrid/voice/recording?contractorId=${contractor.id}&callerPhone=${encodeURIComponent(from)}`;
+
+    console.log("Returning voicemail TwiML for caller to leave message");
+    return new NextResponse(
+      voicemailTwiml(contractor.business_name, recordingCallbackUrl),
+      { headers: { "Content-Type": "text/xml" } }
+    );
   } catch (error) {
     console.error("Voice status webhook error:", error);
     return new NextResponse(emptyTwiml(), {

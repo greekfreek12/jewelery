@@ -183,6 +183,22 @@ PGPASSWORD=$(echo $DB_URL | sed 's/.*:\([^@]*\)@.*/\1/') psql "postgresql://post
 - `004_atomic_unread_increment.sql` - RPC for atomic counter updates
 - `005_admin_controls.sql` - Suspension, feature locks, admin RLS policies
 
+## UI Development - ALWAYS Use frontend-design Skill
+
+**MANDATORY**: When doing ANY UI work (components, pages, layouts, styling), ALWAYS invoke the `frontend-design` skill first using the Skill tool.
+
+This applies to:
+- Creating new pages or components
+- Restyling existing UI
+- Building admin panels, dashboards, forms
+- Any visual/frontend work
+
+The skill enforces distinctive, production-grade design that avoids generic AI aesthetics.
+
+```
+Skill tool: skill="frontend-design", args="[description of what you're building]"
+```
+
 ## Admin Panel Structure
 
 Admin pages are in `src/app/(admin)/admin/`:

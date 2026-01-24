@@ -1,0 +1,61 @@
+{
+  "name": "Jobber → Review Request",
+  "description": "Sends review request when job is completed in Jobber",
+  "flow": [
+    {
+      "id": 1,
+      "module": "jobber:watchEvents",
+      "label": "Watch Events (Job Completed)",
+      "config": {
+        "connection": "{{JOBBER_CONNECTION}}",
+        "eventType": "JOB_UPDATE",
+        "notes": "Configure to watch for job status changes. Filter for completed jobs in the next module."
+      }
+    },
+    {
+      "id": 2,
+      "module": "filter",
+      "label": "Only Completed Jobs",
+      "config": {
+        "condition": "job.status == 'completed'",
+        "notes": "Filter to only process jobs that are marked as completed"
+      }
+    },
+    {
+      "id": 3,
+      "module": "http:makeRequest",
+      "label": "Send to Review Webhook",
+      "config": {
+        "method": "POST",
+        "url": "https://yourapp.com/api/webhooks/trigger-review/{{CONTRACTOR_ID}}",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "contact_phone": "{{job.client.phones[0].number}}",
+          "contact_name": "{{job.client.firstName}} {{job.client.lastName}}",
+          "contact_email": "{{job.client.emails[0].address}}",
+          "job_type": "{{job.title}}",
+          "tech_name": "{{job.assignedUsers[0].name}}",
+          "source": "jobber"
+        }
+      }
+    }
+  ],
+  "setup_instructions": {
+    "step_1": "Import this blueprint into Make.com",
+    "step_2": "Click the Jobber module and connect contractor's Jobber account",
+    "step_3": "In the HTTP module, replace 'yourapp.com' with your actual domain",
+    "step_4": "Replace '{{CONTRACTOR_ID}}' with the contractor's UUID",
+    "step_5": "Turn on the scenario and set schedule to every 15 minutes",
+    "step_6": "Test by completing a job in Jobber"
+  },
+  "field_mapping": {
+    "contact_phone": "Client's primary phone from Jobber",
+    "contact_name": "Client's full name from Jobber",
+    "contact_email": "Client's primary email (optional)",
+    "job_type": "Job title/description from Jobber",
+    "tech_name": "First assigned user's name",
+    "source": "Always 'jobber' for tracking"
+  }
+}

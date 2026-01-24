@@ -1,0 +1,85 @@
+{
+  "name": "QuickBooks → Review Request",
+  "description": "Sends review request when invoice is created or payment received in QuickBooks",
+  "flow": [
+    {
+      "id": 1,
+      "module": "quickbooks:newEvent",
+      "label": "Watch New Events (Invoice/Payment)",
+      "config": {
+        "connection": "{{QUICKBOOKS_CONNECTION}}",
+        "eventType": "Invoice",
+        "notes": "Can also be set to 'Payment' if you want to wait until paid"
+      }
+    },
+    {
+      "id": 2,
+      "module": "quickbooks:getCustomer",
+      "label": "Get Customer Details",
+      "config": {
+        "connection": "{{QUICKBOOKS_CONNECTION}}",
+        "customerId": "{{invoice.CustomerRef.value}}",
+        "notes": "Fetch customer details to get phone number"
+      }
+    },
+    {
+      "id": 3,
+      "module": "filter",
+      "label": "Only If Has Phone",
+      "config": {
+        "condition": "customer.PrimaryPhone.FreeFormNumber != null",
+        "notes": "Skip customers without phone numbers"
+      }
+    },
+    {
+      "id": 4,
+      "module": "http:makeRequest",
+      "label": "Send to Review Webhook",
+      "config": {
+        "method": "POST",
+        "url": "https://yourapp.com/api/webhooks/trigger-review/{{CONTRACTOR_ID}}",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "contact_phone": "{{customer.PrimaryPhone.FreeFormNumber}}",
+          "contact_name": "{{customer.DisplayName}}",
+          "contact_email": "{{customer.PrimaryEmailAddr.Address}}",
+          "job_type": "{{invoice.Line[0].Description}}",
+          "source": "quickbooks"
+        }
+      }
+    }
+  ],
+  "setup_instructions": {
+    "step_1": "Import this blueprint into Make.com",
+    "step_2": "Click the QuickBooks module and connect contractor's QB account",
+    "step_3": "Choose event type: 'Invoice' (on invoice create) or 'Payment' (when paid)",
+    "step_4": "In the HTTP module, replace 'yourapp.com' with your actual domain",
+    "step_5": "Replace '{{CONTRACTOR_ID}}' with the contractor's UUID",
+    "step_6": "Turn on the scenario",
+    "step_7": "Test by creating an invoice in QuickBooks"
+  },
+  "field_mapping": {
+    "contact_phone": "Customer's primary phone from QuickBooks",
+    "contact_name": "Customer's display name",
+    "contact_email": "Customer's primary email (optional)",
+    "job_type": "First line item description (service performed)",
+    "source": "Always 'quickbooks' for tracking"
+  },
+  "notes": {
+    "no_tech_name": "QuickBooks doesn't track which technician did the work. If needed, add to invoice notes.",
+    "phone_required": "Filter ensures we only send to customers with phone numbers.",
+    "invoice_vs_payment": "Use 'Invoice' for faster trigger, 'Payment' to wait until they've paid."
+  },
+  "trigger_options": {
+    "invoice_created": {
+      "eventType": "Invoice",
+      "description": "Trigger when invoice is created (right after job)"
+    },
+    "payment_received": {
+      "eventType": "Payment",
+      "description": "Trigger when payment is recorded (may be days later)"
+    }
+  }
+}
