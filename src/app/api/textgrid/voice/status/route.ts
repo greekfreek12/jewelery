@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createApiServiceClient } from "@/lib/supabase/api-client";
-import { parseFormData, emptyTwiml, voicemailTwiml } from "@/lib/textgrid/webhook";
+import {
+  parseFormData,
+  emptyTwiml,
+  voicemailTwiml,
+  getWebhookBaseUrl,
+  normalizePhoneNumber,
+} from "@/lib/textgrid/webhook";
 import { sendSms } from "@/lib/textgrid/client";
 
 /**
@@ -20,37 +26,46 @@ export async function POST(request: NextRequest) {
     console.log("=========================================");
 
     const callSid = data.CallSid;
-    const dialCallStatus = data.DialCallStatus; // completed, no-answer, busy, failed
-    const dialCallDuration = parseInt(data.DialCallDuration || "0", 10); // Duration in seconds
-    const from = data.From; // Original caller
-    const to = data.To; // Business number (contractor's TextGrid number)
+    // TextGrid sends CallStatus/CallDuration, Twilio sends DialCallStatus/DialCallDuration
+    // Check both to support either provider
+    const dialCallStatus = data.DialCallStatus || data.CallStatus; // completed, no-answer, busy, failed
+    const dialCallDuration = parseInt(data.DialCallDuration || data.CallDuration || "0", 10); // Duration in seconds
+    const from = normalizePhoneNumber(data.From); // Original caller
+    const to = normalizePhoneNumber(data.To); // Business number (contractor's TextGrid number)
 
-    console.log(`Call status: ${dialCallStatus}, duration: ${dialCallDuration}s, from: ${from}, to: ${to}`);
+      console.log(`Call status: ${dialCallStatus}, duration: ${dialCallDuration}s, from: ${from}, to: ${to}`);
 
-    // If call was answered AND talked for more than 15 seconds, it's a real answer
+    const voicemailThresholdSeconds = 25;
+
+    // If call was answered AND talked for more than the voicemail threshold, it's a real answer
     // Short "completed" calls are likely carrier voicemail answering
-    if (dialCallStatus === "completed" && dialCallDuration > 15) {
-      console.log(`Real answer detected (duration: ${dialCallDuration}s > 15s), not sending auto-text`);
+    if (dialCallStatus === "completed" && dialCallDuration > voicemailThresholdSeconds) {
+      console.log(
+        `Real answer detected (duration: ${dialCallDuration}s > ${voicemailThresholdSeconds}s), not sending auto-text`
+      );
       return new NextResponse(emptyTwiml(), {
         headers: { "Content-Type": "text/xml" },
       });
     }
 
-    // If completed but short duration (< 15 sec), treat as voicemail pickup
-    if (dialCallStatus === "completed" && dialCallDuration <= 15) {
-      console.log(`Short "completed" call (${dialCallDuration}s) - likely carrier voicemail, treating as missed`);
+    // If completed but short duration, treat as voicemail pickup
+    if (dialCallStatus === "completed" && dialCallDuration <= voicemailThresholdSeconds) {
+      console.log(
+        `Short "completed" call (${dialCallDuration}s) - likely carrier voicemail, treating as missed`
+      );
       // Fall through to missed call handling below
     }
 
     // Call was missed: no-answer, busy, failed, OR short "completed" (carrier voicemail)
     const supabase = createApiServiceClient();
+    const contractorId = request.nextUrl.searchParams.get("contractorId");
 
-    // Find contractor by their TextGrid phone number
-    const { data: contractor } = await supabase
+    const contractorQuery = supabase
       .from("contractors")
-      .select("id, phone_number, business_name, feature_missed_call_text, templates")
-      .eq("phone_number", to)
-      .single();
+      .select("id, phone_number, business_name, feature_missed_call_text, templates");
+    const { data: contractor } = contractorId
+      ? await contractorQuery.eq("id", contractorId).single()
+      : await contractorQuery.eq("phone_number", to).single();
 
     if (!contractor) {
       console.error(`Contractor not found for number: ${to}`);
@@ -58,6 +73,19 @@ export async function POST(request: NextRequest) {
         headers: { "Content-Type": "text/xml" },
       });
     }
+
+    await supabase.from("analytics_events").insert({
+      contractor_id: contractor.id,
+      event_type: "call_status_callback",
+      metadata: {
+        payload: data,
+        call_sid: callSid,
+        dial_status: dialCallStatus,
+        dial_duration: dialCallDuration,
+        from,
+        to,
+      },
+    });
 
     // Log missed call with duration info
     await supabase.from("analytics_events").insert({
@@ -97,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     // Send auto-text
     try {
-      const webhookBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+      const webhookBaseUrl = getWebhookBaseUrl();
       const statusCallback = `${webhookBaseUrl}/api/textgrid/status/${contractor.id}`;
 
       const result = await sendSms(
@@ -108,28 +136,53 @@ export async function POST(request: NextRequest) {
       );
 
       console.log(`Missed call auto-text sent: ${result.sid}`);
+      await supabase.from("analytics_events").insert({
+        contractor_id: contractor.id,
+        event_type: "missed_call_text_sent",
+        metadata: {
+          to: from,
+          from: to,
+          message_sid: result.sid,
+          call_sid: callSid,
+        },
+      });
 
       // Find or create contact and conversation to log the auto-text
-      const { data: contact } = await supabase
+      const { data: existingContact } = await supabase
         .from("contacts")
         .select("id")
         .eq("contractor_id", contractor.id)
         .eq("phone", from)
         .single();
 
-      if (contact) {
+      let contactId = existingContact?.id;
+      if (!contactId) {
+        const { data: newContact } = await supabase
+          .from("contacts")
+          .insert({
+            contractor_id: contractor.id,
+            phone: from,
+            name: from,
+            source: "call",
+          })
+          .select("id")
+          .single();
+        contactId = newContact?.id;
+      }
+
+      if (contactId) {
         const { data: conversation } = await supabase
           .from("conversations")
           .select("id")
           .eq("contractor_id", contractor.id)
-          .eq("contact_id", contact.id)
+          .eq("contact_id", contactId)
           .single();
 
         if (conversation) {
           // Log the auto-text as an outbound message
           await supabase.from("messages").insert({
             contractor_id: contractor.id,
-            contact_id: contact.id,
+            contact_id: contactId,
             conversation_id: conversation.id,
             direction: "outbound",
             channel: "sms",
@@ -150,10 +203,20 @@ export async function POST(request: NextRequest) {
       }
     } catch (smsError) {
       console.error("Failed to send missed call auto-text:", smsError);
+      await supabase.from("analytics_events").insert({
+        contractor_id: contractor.id,
+        event_type: "missed_call_text_failed",
+        metadata: {
+          to: from,
+          from: to,
+          call_sid: callSid,
+          error: smsError instanceof Error ? smsError.message : String(smsError),
+        },
+      });
     }
 
     // Return voicemail TwiML so caller can leave a message
-    const webhookBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+    const webhookBaseUrl = getWebhookBaseUrl();
     const recordingCallbackUrl = `${webhookBaseUrl}/api/textgrid/voice/recording?contractorId=${contractor.id}&callerPhone=${encodeURIComponent(from)}`;
 
     console.log("Returning voicemail TwiML for caller to leave message");
