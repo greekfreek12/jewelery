@@ -295,3 +295,292 @@
     display: none;
   }
 }
+
+/* ============================================
+   ADMIN PANEL - Enterprise Grade Styles
+   ============================================ */
+
+@layer components {
+  /* Admin Command Header */
+  .admin-header {
+    @apply bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white;
+    background-image:
+      linear-gradient(to right, #0f172a, #1e293b, #0f172a),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 50px,
+        rgba(248, 250, 252, 0.02) 50px,
+        rgba(248, 250, 252, 0.02) 51px
+      );
+  }
+
+  .admin-header::before {
+    content: '';
+    @apply absolute inset-0 opacity-5;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* Admin Tabs */
+  .admin-tabs {
+    @apply flex border-b border-slate-200 bg-white;
+  }
+
+  .admin-tab {
+    @apply relative px-6 py-4 text-sm font-medium text-slate-500 transition-all duration-200
+           hover:text-slate-900 hover:bg-slate-50 cursor-pointer
+           focus:outline-none focus:text-slate-900;
+  }
+
+  .admin-tab-active {
+    @apply admin-tab text-slate-900;
+  }
+
+  .admin-tab-active::after {
+    content: '';
+    @apply absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500;
+  }
+
+  .admin-tab-icon {
+    @apply w-4 h-4 mr-2 inline-block opacity-60;
+  }
+
+  .admin-tab-active .admin-tab-icon {
+    @apply opacity-100 text-amber-500;
+  }
+
+  /* Admin Section Cards */
+  .admin-section {
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden;
+  }
+
+  .admin-section-header {
+    @apply px-6 py-4 border-b border-slate-100 bg-slate-50/50;
+  }
+
+  .admin-section-title {
+    @apply text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2;
+  }
+
+  .admin-section-body {
+    @apply p-6;
+  }
+
+  /* Feature Toggle Row */
+  .feature-row {
+    @apply flex items-center justify-between py-4 border-b border-slate-100 last:border-0;
+  }
+
+  .feature-info {
+    @apply flex-1;
+  }
+
+  .feature-name {
+    @apply font-medium text-slate-900 flex items-center gap-2;
+  }
+
+  .feature-description {
+    @apply text-sm text-slate-500 mt-0.5;
+  }
+
+  .feature-controls {
+    @apply flex items-center gap-3;
+  }
+
+  .feature-locked {
+    @apply opacity-50 pointer-events-none;
+  }
+
+  .lock-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-500;
+  }
+
+  /* Premium Badge */
+  .premium-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold
+           bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900
+           shadow-sm;
+  }
+
+  /* Status Indicator */
+  .status-dot {
+    @apply w-2 h-2 rounded-full flex-shrink-0;
+  }
+
+  .status-dot-active { @apply bg-emerald-500 shadow-sm shadow-emerald-500/50; }
+  .status-dot-trialing { @apply bg-blue-500 shadow-sm shadow-blue-500/50; }
+  .status-dot-past-due { @apply bg-red-500 shadow-sm shadow-red-500/50 animate-pulse; }
+  .status-dot-canceled { @apply bg-slate-400; }
+
+  /* Action Button Group */
+  .action-group {
+    @apply inline-flex rounded-lg overflow-hidden border border-slate-200 divide-x divide-slate-200;
+  }
+
+  .action-btn {
+    @apply px-3 py-2 text-sm font-medium bg-white text-slate-600
+           hover:bg-slate-50 hover:text-slate-900 transition-colors
+           focus:outline-none focus:bg-slate-100;
+  }
+
+  .action-btn-danger {
+    @apply action-btn text-red-600 hover:bg-red-50 hover:text-red-700;
+  }
+
+  /* Phone Number Display */
+  .phone-display {
+    @apply font-mono text-lg font-bold text-slate-900 tracking-wide;
+  }
+
+  .phone-display-large {
+    @apply font-mono text-2xl font-bold text-slate-900 tracking-wider
+           bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent;
+  }
+
+  /* Activity Timeline */
+  .timeline {
+    @apply relative pl-8;
+  }
+
+  .timeline::before {
+    content: '';
+    @apply absolute left-3 top-2 bottom-2 w-px bg-slate-200;
+  }
+
+  .timeline-item {
+    @apply relative pb-6 last:pb-0;
+  }
+
+  .timeline-dot {
+    @apply absolute left-[-1.25rem] top-1 w-2.5 h-2.5 rounded-full bg-slate-300 border-2 border-white;
+  }
+
+  .timeline-dot-active {
+    @apply timeline-dot bg-amber-500;
+  }
+
+  /* Metric Card for Admin */
+  .metric-card {
+    @apply relative bg-white rounded-xl border border-slate-200 p-6 overflow-hidden;
+  }
+
+  .metric-card::before {
+    content: '';
+    @apply absolute top-0 right-0 w-32 h-32 opacity-5;
+    background: radial-gradient(circle at top right, currentColor, transparent 70%);
+  }
+
+  .metric-value {
+    @apply text-3xl font-bold text-slate-900 tracking-tight;
+  }
+
+  .metric-label {
+    @apply text-sm text-slate-500 mt-1;
+  }
+
+  .metric-trend {
+    @apply inline-flex items-center text-xs font-semibold mt-2 px-2 py-0.5 rounded-full;
+  }
+
+  .metric-trend-up {
+    @apply metric-trend bg-emerald-100 text-emerald-700;
+  }
+
+  .metric-trend-down {
+    @apply metric-trend bg-red-100 text-red-700;
+  }
+
+  /* Dropdown Menu */
+  .dropdown-menu {
+    @apply absolute right-0 mt-2 w-56 bg-white rounded-xl border border-slate-200 shadow-xl
+           py-1 z-50 animate-fade-in origin-top-right;
+  }
+
+  .dropdown-item {
+    @apply flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700
+           hover:bg-slate-50 hover:text-slate-900 cursor-pointer transition-colors;
+  }
+
+  .dropdown-item-danger {
+    @apply dropdown-item text-red-600 hover:bg-red-50 hover:text-red-700;
+  }
+
+  .dropdown-divider {
+    @apply my-1 border-t border-slate-100;
+  }
+
+  /* Search Box Enhanced */
+  .search-box {
+    @apply relative;
+  }
+
+  .search-box input {
+    @apply w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-transparent rounded-xl
+           text-slate-900 placeholder-slate-400
+           focus:bg-white focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-500/10
+           transition-all duration-200;
+  }
+
+  .search-box-icon {
+    @apply absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400;
+  }
+
+  /* Data Table Enhanced */
+  .data-table {
+    @apply w-full;
+  }
+
+  .data-table thead {
+    @apply bg-slate-50 border-b border-slate-200 sticky top-0;
+  }
+
+  .data-table th {
+    @apply px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider;
+  }
+
+  .data-table tbody tr {
+    @apply border-b border-slate-100 hover:bg-amber-50/30 transition-colors;
+  }
+
+  .data-table td {
+    @apply px-4 py-4 text-sm text-slate-700;
+  }
+
+  /* Loading Skeleton */
+  .skeleton {
+    @apply bg-slate-200 rounded animate-pulse;
+  }
+
+  .skeleton-text {
+    @apply skeleton h-4 w-full;
+  }
+
+  .skeleton-title {
+    @apply skeleton h-6 w-3/4;
+  }
+
+  .skeleton-avatar {
+    @apply skeleton w-10 h-10 rounded-full;
+  }
+
+  /* Confirmation Modal */
+  .modal-backdrop {
+    @apply fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-slide-up;
+  }
+
+  .modal-header {
+    @apply px-6 py-5 border-b border-slate-100;
+  }
+
+  .modal-body {
+    @apply px-6 py-5;
+  }
+
+  .modal-footer {
+    @apply px-6 py-4 bg-slate-50 flex justify-end gap-3;
+  }
+}
