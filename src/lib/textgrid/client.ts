@@ -186,8 +186,8 @@ export async function sendSms(
 
   if (!response.ok) {
     const error = await response.text();
-    console.error("TextGrid SMS error:", error);
-    throw new Error("Failed to send SMS");
+    console.error("TextGrid SMS error:", response.status, error);
+    throw new Error(`TextGrid SMS failed (${response.status}): ${error || "unknown error"}`);
   }
 
   const data = await response.json();

@@ -11,7 +11,11 @@ import { sendSms } from "@/lib/textgrid/client";
 
 /**
  * Voice call status callback from TextGrid
- * Called after Dial completes to know if call was answered
+ * Called multiple times with statusCallbackEvent on <Number> noun:
+ *   - initiated: dial started
+ *   - ringing: destination is ringing
+ *   - answered: human picked up (KEY EVENT!)
+ *   - completed: dial finished
  * URL: /api/textgrid/voice/status
  */
 export async function POST(request: NextRequest) {
@@ -28,37 +32,90 @@ export async function POST(request: NextRequest) {
     const callSid = data.CallSid;
     // TextGrid sends CallStatus/CallDuration, Twilio sends DialCallStatus/DialCallDuration
     // Check both to support either provider
-    const dialCallStatus = data.DialCallStatus || data.CallStatus; // completed, no-answer, busy, failed
-    const dialCallDuration = parseInt(data.DialCallDuration || data.CallDuration || "0", 10); // Duration in seconds
+    const dialCallStatus = data.DialCallStatus || data.CallStatus; // initiated, ringing, answered, completed, no-answer, busy, failed
+    const dialCallDuration = parseInt(data.DialCallDuration || data.CallDuration || "0", 10);
     const from = normalizePhoneNumber(data.From); // Original caller
     const to = normalizePhoneNumber(data.To); // Business number (contractor's TextGrid number)
+    const callbackSource = data.CallbackSource; // "call-progress-events" for intermediate events
 
-      console.log(`Call status: ${dialCallStatus}, duration: ${dialCallDuration}s, from: ${from}, to: ${to}`);
+    console.log(`Call status: ${dialCallStatus}, duration: ${dialCallDuration}s, from: ${from}, to: ${to}, source: ${callbackSource}`);
 
-    const voicemailThresholdSeconds = 25;
+    const supabase = createApiServiceClient();
+    const contractorId = request.nextUrl.searchParams.get("contractorId");
 
-    // If call was answered AND talked for more than the voicemail threshold, it's a real answer
-    // Short "completed" calls are likely carrier voicemail answering
-    if (dialCallStatus === "completed" && dialCallDuration > voicemailThresholdSeconds) {
-      console.log(
-        `Real answer detected (duration: ${dialCallDuration}s > ${voicemailThresholdSeconds}s), not sending auto-text`
-      );
+    // === HANDLE "ANSWERED" EVENT ===
+    // If we receive an "answered" event, log it so we know a human picked up
+    // This is the KEY to deterministic detection!
+    if (dialCallStatus === "answered") {
+      console.log(`🎉 ANSWERED EVENT RECEIVED for CallSid: ${callSid} - human picked up!`);
+
+      // Log the answered event to database
+      await supabase.from("analytics_events").insert({
+        contractor_id: contractorId || null,
+        event_type: "call_answered_event",
+        metadata: {
+          call_sid: callSid,
+          from,
+          to,
+          callback_source: callbackSource,
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      // Return empty TwiML - no action needed yet
       return new NextResponse(emptyTwiml(), {
         headers: { "Content-Type": "text/xml" },
       });
     }
 
-    // If completed but short duration, treat as voicemail pickup
-    if (dialCallStatus === "completed" && dialCallDuration <= voicemailThresholdSeconds) {
-      console.log(
-        `Short "completed" call (${dialCallDuration}s) - likely carrier voicemail, treating as missed`
-      );
-      // Fall through to missed call handling below
+    // === HANDLE INTERMEDIATE EVENTS (initiated, ringing) ===
+    // Just log these for debugging, no action needed
+    if (dialCallStatus === "initiated" || dialCallStatus === "ringing") {
+      console.log(`Intermediate event: ${dialCallStatus} for CallSid: ${callSid}`);
+
+      await supabase.from("analytics_events").insert({
+        contractor_id: contractorId || null,
+        event_type: `call_${dialCallStatus}_event`,
+        metadata: {
+          call_sid: callSid,
+          from,
+          to,
+          callback_source: callbackSource,
+        },
+      });
+
+      return new NextResponse(emptyTwiml(), {
+        headers: { "Content-Type": "text/xml" },
+      });
     }
 
-    // Call was missed: no-answer, busy, failed, OR short "completed" (carrier voicemail)
-    const supabase = createApiServiceClient();
-    const contractorId = request.nextUrl.searchParams.get("contractorId");
+    // === HANDLE FINAL EVENTS (completed, no-answer, busy, failed) ===
+
+    // Check if we previously received an "answered" event for this CallSid
+    const { data: answeredEvent } = await supabase
+      .from("analytics_events")
+      .select("id")
+      .eq("event_type", "call_answered_event")
+      .eq("metadata->>call_sid", callSid)
+      .limit(1)
+      .single();
+
+    const humanAnswered = !!answeredEvent;
+    console.log(`Final status for CallSid ${callSid}: ${dialCallStatus}, humanAnswered: ${humanAnswered}`);
+
+    // If we got an "answered" event, the call was truly answered - don't send text
+    if (humanAnswered) {
+      console.log(`Call was answered by human (had answered event), not sending auto-text`);
+      return new NextResponse(emptyTwiml(), {
+        headers: { "Content-Type": "text/xml" },
+      });
+    }
+
+    // NO TIMER FALLBACK - purely event-based detection
+    // If no "answered" event was logged, treat as missed call
+
+    // === MISSED CALL - SEND AUTO-TEXT ===
+    console.log(`Call was MISSED (status: ${dialCallStatus}, no answered event, duration: ${dialCallDuration}s)`);
 
     const contractorQuery = supabase
       .from("contractors")

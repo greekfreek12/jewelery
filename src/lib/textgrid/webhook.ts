@@ -44,6 +44,22 @@ export function parseFormData(formData: FormData): Record<string, string> {
   return result;
 }
 
+export function normalizePhoneNumber(value?: string | null): string {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (trimmed.startsWith("+")) return trimmed;
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return trimmed;
+}
+
+export function getWebhookBaseUrl(): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || "";
+  if (!baseUrl) return "";
+  return baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+}
+
 /**
  * Parse incoming voice call webhook data
  */
@@ -100,11 +116,18 @@ export function forwardCallTwiml(
   statusCallbackUrl?: string
 ): string {
   const callerIdAttr = callerId ? ` callerId="${callerId}"` : "";
-  const actionAttr = statusCallbackUrl ? ` action="${statusCallbackUrl}"` : "";
+  const actionAttr = statusCallbackUrl
+    ? ` action="${statusCallbackUrl}" method="POST"`
+    : "";
+  // Add statusCallback on the Number noun to get granular dial leg events
+  // This should fire separate callbacks for: initiated, ringing, answered, completed
+  const numberStatusCallback = statusCallbackUrl
+    ? ` statusCallback="${statusCallbackUrl}" statusCallbackEvent="initiated ringing answered completed" statusCallbackMethod="POST"`
+    : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial${callerIdAttr} timeout="${timeout}"${actionAttr}>
-    <Number>${forwardingNumber}</Number>
+    <Number${numberStatusCallback}>${forwardingNumber}</Number>
   </Dial>
 </Response>`;
 }

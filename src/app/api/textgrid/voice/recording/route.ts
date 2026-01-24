@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createApiServiceClient } from "@/lib/supabase/api-client";
-import { parseFormData, emptyTwiml } from "@/lib/textgrid/webhook";
+import {
+  parseFormData,
+  emptyTwiml,
+  normalizePhoneNumber,
+} from "@/lib/textgrid/webhook";
 
 /**
  * Voicemail recording callback from TextGrid
@@ -16,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     // Get contractor and caller from query params
     const contractorId = request.nextUrl.searchParams.get("contractorId");
-    const callerPhone = request.nextUrl.searchParams.get("callerPhone");
+    const callerPhone = normalizePhoneNumber(request.nextUrl.searchParams.get("callerPhone"));
 
     const recordingUrl = data.RecordingUrl;
     const recordingDuration = data.RecordingDuration;

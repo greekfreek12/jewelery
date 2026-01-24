@@ -4,6 +4,7 @@ import {
   parseFormData,
   forwardCallTwiml,
   missedCallTwiml,
+  getWebhookBaseUrl,
 } from "@/lib/textgrid/webhook";
 
 /**
@@ -122,8 +123,8 @@ export async function POST(
       });
 
       // Build absolute URL for status callback (TextGrid needs full URL)
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-      const statusCallbackUrl = `${baseUrl}/api/textgrid/voice/status`;
+      const baseUrl = getWebhookBaseUrl();
+      const statusCallbackUrl = `${baseUrl}/api/textgrid/voice/status?contractorId=${contractor.id}`;
 
       const twiml = forwardCallTwiml(
         contractor.forwarding_number,
