@@ -1,17 +1,32 @@
 import webpush from "web-push";
 import { createClient } from "@/lib/supabase/server";
 
-// Configure web-push with VAPID keys
+// Configure web-push with VAPID keys (lazy initialization)
 // Generate keys with: npx web-push generate-vapid-keys
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
+let vapidConfigured = false;
 
-if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(
-    "mailto:support@contractorgrow.com",
-    vapidPublicKey,
-    vapidPrivateKey
-  );
+function ensureVapidConfigured(): boolean {
+  if (vapidConfigured) return true;
+
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
+
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    return false;
+  }
+
+  try {
+    webpush.setVapidDetails(
+      "mailto:support@contractorgrow.com",
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+    vapidConfigured = true;
+    return true;
+  } catch (error) {
+    console.warn("Failed to configure VAPID keys:", error);
+    return false;
+  }
 }
 
 interface PushPayload {
@@ -33,7 +48,7 @@ export async function sendPushNotification(
   payload: PushPayload,
   supabaseClient?: unknown
 ): Promise<{ success: number; failed: number }> {
-  if (!vapidPublicKey || !vapidPrivateKey) {
+  if (!ensureVapidConfigured()) {
     console.warn("VAPID keys not configured, skipping push notification");
     return { success: 0, failed: 0 };
   }
