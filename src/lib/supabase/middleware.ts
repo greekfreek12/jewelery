@@ -51,9 +51,14 @@ export async function updateSession(request: NextRequest) {
   if (isProtectedPath && user) {
     const { data: contractor } = await supabase
       .from("contractors")
-      .select("subscription_status")
+      .select("subscription_status, is_admin")
       .eq("id", user.id)
       .single();
+
+    // Admins bypass subscription check
+    if (contractor?.is_admin) {
+      return supabaseResponse;
+    }
 
     const activeStatuses = ["trialing", "active"];
     const hasActiveSubscription = contractor && activeStatuses.includes(contractor.subscription_status || "");
