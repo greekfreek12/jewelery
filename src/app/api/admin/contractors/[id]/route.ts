@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createApiClient } from "@/lib/supabase/api-client";
+import { createApiClient, createApiServiceClient } from "@/lib/supabase/api-client";
 
 /**
  * Update contractor (admin only)
@@ -32,6 +32,9 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Use service client for admin operations
+    const serviceClient = createApiServiceClient();
+
     const body = await request.json();
     const {
       business_name,
@@ -43,8 +46,12 @@ export async function PUT(
       feature_review_drip,
       feature_ai_responses,
       feature_campaigns,
+      feature_ai_responses_locked,
+      feature_campaigns_locked,
       is_admin,
       subscription_status,
+      notification_push,
+      notification_email,
     } = body;
 
     // Build update object
@@ -80,18 +87,30 @@ export async function PUT(
     if (feature_campaigns !== undefined) {
       updates.feature_campaigns = feature_campaigns;
     }
+    if (feature_ai_responses_locked !== undefined) {
+      updates.feature_ai_responses_locked = feature_ai_responses_locked;
+    }
+    if (feature_campaigns_locked !== undefined) {
+      updates.feature_campaigns_locked = feature_campaigns_locked;
+    }
     if (is_admin !== undefined) {
       updates.is_admin = is_admin;
     }
     if (subscription_status !== undefined) {
       updates.subscription_status = subscription_status;
     }
+    if (notification_push !== undefined) {
+      updates.notification_push = notification_push;
+    }
+    if (notification_email !== undefined) {
+      updates.notification_email = notification_email;
+    }
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
-    const { data: contractor, error } = await supabase
+    const { data: contractor, error } = await serviceClient
       .from("contractors")
       .update(updates)
       .eq("id", id)
@@ -147,7 +166,10 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { data: contractor, error } = await supabase
+    // Use service client for admin operations
+    const serviceClient = createApiServiceClient();
+
+    const { data: contractor, error } = await serviceClient
       .from("contractors")
       .select("*")
       .eq("id", id)
@@ -165,6 +187,80 @@ export async function GET(
     console.error("Admin get contractor error:", error);
     return NextResponse.json(
       { error: "Failed to get contractor" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Delete contractor (admin only)
+ * DELETE /api/admin/contractors/[id]
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  try {
+    const supabase = await createApiClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if current user is admin
+    const { data: currentUser } = await supabase
+      .from("contractors")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    if (!currentUser?.is_admin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Don't allow deleting yourself
+    if (id === user.id) {
+      return NextResponse.json(
+        { error: "Cannot delete your own account" },
+        { status: 400 }
+      );
+    }
+
+    // Use service client for admin operations
+    const serviceClient = createApiServiceClient();
+
+    // Delete the contractor (cascade will handle related records)
+    const { error } = await serviceClient
+      .from("contractors")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Failed to delete contractor:", error);
+      return NextResponse.json(
+        { error: "Failed to delete contractor" },
+        { status: 500 }
+      );
+    }
+
+    // Also delete the auth user
+    const { error: authError } = await serviceClient.auth.admin.deleteUser(id);
+
+    if (authError) {
+      console.error("Failed to delete auth user:", authError);
+      // Contractor is already deleted, just log the error
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Admin delete contractor error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete contractor" },
       { status: 500 }
     );
   }

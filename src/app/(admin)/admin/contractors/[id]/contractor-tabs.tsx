@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   CheckCircle,
   XCircle,
@@ -287,10 +288,84 @@ function OverviewTab({
 // ============================================
 
 function SettingsTab({ contractor }: { contractor: Contractor }) {
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Form state
+  const [businessName, setBusinessName] = useState(contractor.business_name);
+  const [timezone, setTimezone] = useState(contractor.timezone);
+  const [googleReviewLink, setGoogleReviewLink] = useState(contractor.google_review_link || "");
+
+  // Feature toggles
+  const [features, setFeatures] = useState({
+    feature_missed_call_text: contractor.feature_missed_call_text,
+    feature_review_automation: contractor.feature_review_automation,
+    feature_review_drip: contractor.feature_review_drip,
+    feature_ai_responses: contractor.feature_ai_responses,
+    feature_campaigns: contractor.feature_campaigns,
+    notification_push: contractor.notification_push,
+    notification_email: contractor.notification_email,
+    is_admin: contractor.is_admin,
+  });
+
+  const toggleFeature = (key: keyof typeof features) => {
+    setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch(`/api/admin/contractors/${contractor.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          business_name: businessName,
+          timezone,
+          google_review_link: googleReviewLink || null,
+          ...features,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to save");
+      }
+
+      setMessage({ type: "success", text: "Settings saved successfully" });
+      router.refresh();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Failed to save settings",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Status Message */}
+      {message && (
+        <div
+          className={`p-4 rounded-lg flex items-center gap-3 ${
+            message.type === "success"
+              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+              : "bg-red-50 text-red-800 border border-red-200"
+          }`}
+        >
+          {message.type === "success" ? (
+            <CheckCircle className="w-5 h-5" />
+          ) : (
+            <XCircle className="w-5 h-5" />
+          )}
+          {message.text}
+        </div>
+      )}
+
       {/* Business Info */}
       <div className="admin-section">
         <div className="admin-section-header">
@@ -306,7 +381,8 @@ function SettingsTab({ contractor }: { contractor: Contractor }) {
               <input
                 type="text"
                 className="input"
-                defaultValue={contractor.business_name}
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
               />
             </div>
             <div>
@@ -321,7 +397,11 @@ function SettingsTab({ contractor }: { contractor: Contractor }) {
             </div>
             <div>
               <label className="label">Timezone</label>
-              <select className="input" defaultValue={contractor.timezone}>
+              <select
+                className="input"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+              >
                 <option value="America/New_York">Eastern Time</option>
                 <option value="America/Chicago">Central Time</option>
                 <option value="America/Denver">Mountain Time</option>
@@ -333,7 +413,8 @@ function SettingsTab({ contractor }: { contractor: Contractor }) {
               <input
                 type="url"
                 className="input"
-                defaultValue={contractor.google_review_link || ""}
+                value={googleReviewLink}
+                onChange={(e) => setGoogleReviewLink(e.target.value)}
                 placeholder="https://g.page/review/..."
               />
             </div>
@@ -354,36 +435,34 @@ function SettingsTab({ contractor }: { contractor: Contractor }) {
             <FeatureToggleRow
               name="Missed Call Auto-Text"
               description="Automatically send SMS when calls are missed"
-              enabled={contractor.feature_missed_call_text}
-              onToggle={() => {}}
+              enabled={features.feature_missed_call_text}
+              onToggle={() => toggleFeature("feature_missed_call_text")}
             />
             <FeatureToggleRow
               name="Review Automation"
               description="Parse ratings and send auto-replies"
-              enabled={contractor.feature_review_automation}
-              onToggle={() => {}}
+              enabled={features.feature_review_automation}
+              onToggle={() => toggleFeature("feature_review_automation")}
             />
             <FeatureToggleRow
               name="Review Drip Reminders"
               description="Send follow-up reminders on Day 3 and Day 7"
-              enabled={contractor.feature_review_drip}
-              onToggle={() => {}}
+              enabled={features.feature_review_drip}
+              onToggle={() => toggleFeature("feature_review_drip")}
             />
             <FeatureToggleRow
               name="AI Responses"
               description="Use AI to generate personalized responses"
-              enabled={contractor.feature_ai_responses}
-              onToggle={() => {}}
+              enabled={features.feature_ai_responses}
+              onToggle={() => toggleFeature("feature_ai_responses")}
               premium
-              locked={!contractor.feature_ai_responses}
             />
             <FeatureToggleRow
               name="Review Campaigns"
               description="Send bulk review requests to contacts"
-              enabled={contractor.feature_campaigns}
-              onToggle={() => {}}
+              enabled={features.feature_campaigns}
+              onToggle={() => toggleFeature("feature_campaigns")}
               premium
-              locked={!contractor.feature_campaigns}
             />
           </div>
         </div>
@@ -402,14 +481,14 @@ function SettingsTab({ contractor }: { contractor: Contractor }) {
             <FeatureToggleRow
               name="Push Notifications"
               description="Receive browser push notifications for new messages"
-              enabled={contractor.notification_push}
-              onToggle={() => {}}
+              enabled={features.notification_push}
+              onToggle={() => toggleFeature("notification_push")}
             />
             <FeatureToggleRow
               name="Email Notifications"
               description="Receive email digests and alerts"
-              enabled={contractor.notification_email}
-              onToggle={() => {}}
+              enabled={features.notification_email}
+              onToggle={() => toggleFeature("notification_email")}
             />
           </div>
         </div>
@@ -428,8 +507,8 @@ function SettingsTab({ contractor }: { contractor: Contractor }) {
             <FeatureToggleRow
               name="Admin Access"
               description="Grant this user admin panel access"
-              enabled={contractor.is_admin}
-              onToggle={() => {}}
+              enabled={features.is_admin}
+              onToggle={() => toggleFeature("is_admin")}
             />
           </div>
         </div>
@@ -440,10 +519,7 @@ function SettingsTab({ contractor }: { contractor: Contractor }) {
         <button
           className="btn-primary px-8"
           disabled={saving}
-          onClick={() => {
-            setSaving(true);
-            setTimeout(() => setSaving(false), 1000);
-          }}
+          onClick={handleSave}
         >
           {saving ? (
             <>
@@ -463,6 +539,13 @@ function SettingsTab({ contractor }: { contractor: Contractor }) {
 // PHONE TAB
 // ============================================
 
+interface AvailableNumber {
+  phoneNumber: string;
+  friendlyName: string;
+  locality?: string;
+  region?: string;
+}
+
 function PhoneTab({
   contractor,
   recentConversations,
@@ -470,11 +553,125 @@ function PhoneTab({
   contractor: Contractor;
   recentConversations: Conversation[];
 }) {
+  const router = useRouter();
   const [searchingNumbers, setSearchingNumbers] = useState(false);
+  const [provisioning, setProvisioning] = useState(false);
+  const [savingForwarding, setSavingForwarding] = useState(false);
   const [areaCode, setAreaCode] = useState("");
+  const [availableNumbers, setAvailableNumbers] = useState<AvailableNumber[]>([]);
+  const [forwardingNumber, setForwardingNumber] = useState(contractor.forwarding_number || "");
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const handleSearch = async () => {
+    if (areaCode.length !== 3) {
+      setMessage({ type: "error", text: "Please enter a valid 3-digit area code" });
+      return;
+    }
+
+    setSearchingNumbers(true);
+    setMessage(null);
+    setAvailableNumbers([]);
+
+    try {
+      const response = await fetch(`/api/phone/search?areaCode=${areaCode}`);
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to search numbers");
+      }
+
+      const data = await response.json();
+      setAvailableNumbers(data.numbers || []);
+
+      if (data.numbers?.length === 0) {
+        setMessage({ type: "error", text: "No numbers available in this area code" });
+      }
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Failed to search numbers",
+      });
+    } finally {
+      setSearchingNumbers(false);
+    }
+  };
+
+  const handleProvision = async (phoneNumber: string) => {
+    setProvisioning(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch(`/api/admin/contractors/${contractor.id}/provision-phone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to provision number");
+      }
+
+      setMessage({ type: "success", text: "Phone number provisioned successfully!" });
+      setAvailableNumbers([]);
+      router.refresh();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Failed to provision number",
+      });
+    } finally {
+      setProvisioning(false);
+    }
+  };
+
+  const handleSaveForwarding = async () => {
+    setSavingForwarding(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch(`/api/admin/contractors/${contractor.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ forwarding_number: forwardingNumber }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to save forwarding number");
+      }
+
+      setMessage({ type: "success", text: "Forwarding number saved" });
+      router.refresh();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Failed to save",
+      });
+    } finally {
+      setSavingForwarding(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Status Message */}
+      {message && (
+        <div
+          className={`p-4 rounded-lg flex items-center gap-3 ${
+            message.type === "success"
+              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+              : "bg-red-50 text-red-800 border border-red-200"
+          }`}
+        >
+          {message.type === "success" ? (
+            <CheckCircle className="w-5 h-5" />
+          ) : (
+            <XCircle className="w-5 h-5" />
+          )}
+          {message.text}
+        </div>
+      )}
+
       {/* Current Phone Number */}
       <div className="admin-section">
         <div className="admin-section-header">
@@ -487,7 +684,7 @@ function PhoneTab({
           {contractor.phone_number ? (
             <div className="flex items-center justify-between">
               <div>
-                <p className="phone-display-large">
+                <p className="text-2xl font-bold text-slate-900 font-mono">
                   {formatPhone(contractor.phone_number)}
                 </p>
                 <p className="text-sm text-slate-500 mt-1">
@@ -495,11 +692,11 @@ function PhoneTab({
                 </p>
               </div>
               <div className="flex gap-2">
-                <button className="btn-secondary btn-sm">
+                <button className="btn-secondary text-sm">
                   <RefreshCw className="w-4 h-4 mr-1" />
                   Change Number
                 </button>
-                <button className="btn-secondary btn-sm text-red-600 hover:bg-red-50">
+                <button className="btn-secondary text-sm text-red-600 hover:bg-red-50">
                   <PhoneOff className="w-4 h-4 mr-1" />
                   Release
                 </button>
@@ -523,15 +720,12 @@ function PhoneTab({
                     className="input flex-1"
                     placeholder="Area code (e.g., 504)"
                     value={areaCode}
-                    onChange={(e) => setAreaCode(e.target.value)}
+                    onChange={(e) => setAreaCode(e.target.value.replace(/\D/g, ""))}
                     maxLength={3}
                   />
                   <button
                     className="btn-accent"
-                    onClick={() => {
-                      setSearchingNumbers(true);
-                      setTimeout(() => setSearchingNumbers(false), 1500);
-                    }}
+                    onClick={handleSearch}
                     disabled={searchingNumbers}
                   >
                     {searchingNumbers ? (
@@ -545,6 +739,45 @@ function PhoneTab({
                   </button>
                 </div>
               </div>
+
+              {/* Available Numbers */}
+              {availableNumbers.length > 0 && (
+                <div className="mt-6 max-w-md mx-auto">
+                  <h5 className="text-sm font-semibold text-slate-700 mb-3 text-left">
+                    Available Numbers
+                  </h5>
+                  <div className="space-y-2">
+                    {availableNumbers.map((num) => (
+                      <div
+                        key={num.phoneNumber}
+                        className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                      >
+                        <div className="text-left">
+                          <p className="font-mono font-medium text-slate-900">
+                            {formatPhone(num.phoneNumber)}
+                          </p>
+                          {num.locality && (
+                            <p className="text-xs text-slate-500">
+                              {num.locality}, {num.region}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          className="btn-accent text-sm"
+                          onClick={() => handleProvision(num.phoneNumber)}
+                          disabled={provisioning}
+                        >
+                          {provisioning ? (
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                          ) : (
+                            "Provision"
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -561,12 +794,26 @@ function PhoneTab({
         <div className="admin-section-body">
           <div className="max-w-md">
             <label className="label">Forward Calls To</label>
-            <input
-              type="tel"
-              className="input"
-              defaultValue={contractor.forwarding_number || ""}
-              placeholder="(555) 123-4567"
-            />
+            <div className="flex gap-3">
+              <input
+                type="tel"
+                className="input flex-1"
+                value={forwardingNumber}
+                onChange={(e) => setForwardingNumber(e.target.value)}
+                placeholder="(555) 123-4567"
+              />
+              <button
+                className="btn-accent"
+                onClick={handleSaveForwarding}
+                disabled={savingForwarding}
+              >
+                {savingForwarding ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Save"
+                )}
+              </button>
+            </div>
             <p className="text-xs text-slate-500 mt-2">
               Incoming calls to the business number will be forwarded to this personal number.
             </p>
@@ -628,6 +875,11 @@ function PhoneTab({
 // ============================================
 
 function BillingTab({ contractor }: { contractor: Contractor }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [overrideStatus, setOverrideStatus] = useState(contractor.subscription_status);
+
   const statusConfig: Record<string, { color: string; label: string; icon: React.ElementType }> = {
     active: { color: "text-emerald-600 bg-emerald-50 border-emerald-200", label: "Active", icon: CheckCircle },
     trialing: { color: "text-blue-600 bg-blue-50 border-blue-200", label: "Trialing", icon: Clock },
@@ -638,8 +890,114 @@ function BillingTab({ contractor }: { contractor: Contractor }) {
   const status = statusConfig[contractor.subscription_status] || statusConfig.canceled;
   const StatusIcon = status.icon;
 
+  const handleExtendTrial = async () => {
+    setLoading("extend");
+    setMessage(null);
+
+    try {
+      const response = await fetch(`/api/admin/contractors/${contractor.id}/extend-trial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: 7 }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to extend trial");
+      }
+
+      setMessage({ type: "success", text: "Trial extended by 7 days" });
+      router.refresh();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Failed to extend trial",
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleUpdateStatus = async () => {
+    setLoading("status");
+    setMessage(null);
+
+    try {
+      const response = await fetch(`/api/admin/contractors/${contractor.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription_status: overrideStatus }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update status");
+      }
+
+      setMessage({ type: "success", text: "Status updated successfully" });
+      router.refresh();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Failed to update status",
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!confirm("Are you sure you want to cancel this subscription? This will set the status to canceled.")) {
+      return;
+    }
+
+    setLoading("cancel");
+    setMessage(null);
+
+    try {
+      const response = await fetch(`/api/admin/contractors/${contractor.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription_status: "canceled" }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to cancel subscription");
+      }
+
+      setMessage({ type: "success", text: "Subscription canceled" });
+      router.refresh();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Failed to cancel subscription",
+      });
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Status Message */}
+      {message && (
+        <div
+          className={`p-4 rounded-lg flex items-center gap-3 ${
+            message.type === "success"
+              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+              : "bg-red-50 text-red-800 border border-red-200"
+          }`}
+        >
+          {message.type === "success" ? (
+            <CheckCircle className="w-5 h-5" />
+          ) : (
+            <XCircle className="w-5 h-5" />
+          )}
+          {message.text}
+        </div>
+      )}
+
       {/* Subscription Status */}
       <div className="admin-section">
         <div className="admin-section-header">
@@ -694,18 +1052,38 @@ function BillingTab({ contractor }: { contractor: Contractor }) {
         </div>
         <div className="admin-section-body">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <button className="btn-secondary justify-start p-4 h-auto flex-col items-start">
-              <Calendar className="w-5 h-5 mb-2 text-amber-500" />
+            <button
+              className="btn-secondary justify-start p-4 h-auto flex-col items-start"
+              onClick={handleExtendTrial}
+              disabled={loading === "extend"}
+            >
+              {loading === "extend" ? (
+                <RefreshCw className="w-5 h-5 mb-2 text-amber-500 animate-spin" />
+              ) : (
+                <Calendar className="w-5 h-5 mb-2 text-amber-500" />
+              )}
               <span className="font-semibold">Extend Trial</span>
               <span className="text-xs text-slate-500">Add 7 more days</span>
             </button>
-            <button className="btn-secondary justify-start p-4 h-auto flex-col items-start">
+            <button
+              className="btn-secondary justify-start p-4 h-auto flex-col items-start"
+              onClick={() => router.refresh()}
+              disabled={loading !== null}
+            >
               <RefreshCw className="w-5 h-5 mb-2 text-blue-500" />
               <span className="font-semibold">Sync Status</span>
               <span className="text-xs text-slate-500">Refresh from Stripe</span>
             </button>
-            <button className="btn-secondary justify-start p-4 h-auto flex-col items-start text-red-600 hover:bg-red-50">
-              <XCircle className="w-5 h-5 mb-2" />
+            <button
+              className="btn-secondary justify-start p-4 h-auto flex-col items-start text-red-600 hover:bg-red-50"
+              onClick={handleCancelSubscription}
+              disabled={loading === "cancel"}
+            >
+              {loading === "cancel" ? (
+                <RefreshCw className="w-5 h-5 mb-2 animate-spin" />
+              ) : (
+                <XCircle className="w-5 h-5 mb-2" />
+              )}
               <span className="font-semibold">Cancel Subscription</span>
               <span className="text-xs text-slate-500">End billing immediately</span>
             </button>
@@ -726,13 +1104,30 @@ function BillingTab({ contractor }: { contractor: Contractor }) {
             Override the subscription status manually. Use with caution - this does not affect Stripe.
           </p>
           <div className="flex items-center gap-4">
-            <select className="input max-w-xs" defaultValue={contractor.subscription_status}>
+            <select
+              className="input max-w-xs"
+              value={overrideStatus}
+              onChange={(e) => setOverrideStatus(e.target.value)}
+            >
               <option value="active">Active</option>
               <option value="trialing">Trialing</option>
               <option value="past_due">Past Due</option>
               <option value="canceled">Canceled</option>
             </select>
-            <button className="btn-accent">Update Status</button>
+            <button
+              className="btn-accent"
+              onClick={handleUpdateStatus}
+              disabled={loading === "status"}
+            >
+              {loading === "status" ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Status"
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -888,17 +1283,15 @@ function FeatureToggleRow({
   enabled,
   onToggle,
   premium = false,
-  locked = false,
 }: {
   name: string;
   description: string;
   enabled: boolean;
   onToggle: () => void;
   premium?: boolean;
-  locked?: boolean;
 }) {
   return (
-    <div className={`feature-row ${locked ? "feature-locked" : ""}`}>
+    <div className="feature-row">
       <div className="feature-info">
         <div className="feature-name">
           {name}
@@ -908,32 +1301,17 @@ function FeatureToggleRow({
               PRO
             </span>
           )}
-          {locked && (
-            <span className="lock-badge">
-              <Lock className="w-3 h-3" />
-              Locked
-            </span>
-          )}
         </div>
         <p className="feature-description">{description}</p>
       </div>
       <div className="feature-controls">
-        {!locked && (
-          <button
-            onClick={onToggle}
-            className={`toggle ${enabled ? "toggle-on" : "toggle-off"}`}
-          >
-            <span
-              className={`toggle-knob ${enabled ? "translate-x-5" : "translate-x-1"}`}
-            />
-          </button>
-        )}
-        <button className="p-1.5 rounded hover:bg-slate-100 transition-colors">
-          {locked ? (
-            <Lock className="w-4 h-4 text-slate-400" />
-          ) : (
-            <Unlock className="w-4 h-4 text-slate-400" />
-          )}
+        <button
+          onClick={onToggle}
+          className={`toggle ${enabled ? "toggle-on" : "toggle-off"}`}
+        >
+          <span
+            className={`toggle-knob ${enabled ? "translate-x-5" : "translate-x-1"}`}
+          />
         </button>
       </div>
     </div>

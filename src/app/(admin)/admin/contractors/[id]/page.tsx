@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -8,30 +8,15 @@ import {
   Phone,
   CreditCard,
   Activity,
-  MoreVertical,
   ExternalLink,
   Mail,
   Shield,
-  Trash2,
-  UserX,
-  KeyRound,
-  Copy,
-  CheckCircle,
-  XCircle,
-  Lock,
-  Unlock,
-  Zap,
   MessageSquare,
   Star,
-  TrendingUp,
   Users,
-  Clock,
-  Calendar,
-  Building2,
-  Globe,
-  ChevronRight,
 } from "lucide-react";
 import { ContractorTabs } from "./contractor-tabs";
+import { ActionsDropdown } from "./actions-dropdown";
 
 export default async function AdminContractorDetailPage({
   params,
@@ -42,9 +27,30 @@ export default async function AdminContractorDetailPage({
 }) {
   const { id } = await params;
   const { tab = "overview" } = await searchParams;
-  const supabase = await createClient();
 
-  // Get contractor details with service role to bypass RLS
+  // First check if current user is admin
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // Check if user is admin
+  const { data: currentUser } = await authClient
+    .from("contractors")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single() as { data: { is_admin: boolean } | null };
+
+  if (!currentUser?.is_admin) {
+    redirect("/dashboard");
+  }
+
+  // Use service client to bypass RLS for admin operations
+  const supabase = createServiceClient();
+
+  // Get contractor details
   const { data: contractorData, error } = await supabase
     .from("contractors")
     .select("*")
@@ -348,46 +354,6 @@ function StatusBadge({ status }: { status: string }) {
       <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
       {label}
     </span>
-  );
-}
-
-function ActionsDropdown({ contractor }: { contractor: { id: string; stripe_customer_id: string | null } }) {
-  return (
-    <div className="relative group">
-      <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors">
-        <MoreVertical className="w-5 h-5" />
-      </button>
-      <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl border border-slate-200 shadow-xl py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-        <button className="dropdown-item w-full text-left">
-          <KeyRound className="w-4 h-4" />
-          Send Password Reset
-        </button>
-        <button className="dropdown-item w-full text-left">
-          <Copy className="w-4 h-4" />
-          Copy Contractor ID
-        </button>
-        {contractor.stripe_customer_id && (
-          <a
-            href={`https://dashboard.stripe.com/customers/${contractor.stripe_customer_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="dropdown-item"
-          >
-            <ExternalLink className="w-4 h-4" />
-            View in Stripe
-          </a>
-        )}
-        <div className="dropdown-divider" />
-        <button className="dropdown-item-danger w-full text-left">
-          <UserX className="w-4 h-4" />
-          Suspend Account
-        </button>
-        <button className="dropdown-item-danger w-full text-left">
-          <Trash2 className="w-4 h-4" />
-          Delete Account
-        </button>
-      </div>
-    </div>
   );
 }
 

@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Search,
@@ -15,7 +16,28 @@ export default async function AdminContractorsPage({
   searchParams: Promise<{ status?: string; search?: string }>;
 }) {
   const params = await searchParams;
-  const supabase = await createClient();
+
+  // First check if current user is admin using regular client
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // Check if user is admin
+  const { data: currentUser } = await authClient
+    .from("contractors")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single() as { data: { is_admin: boolean } | null };
+
+  if (!currentUser?.is_admin) {
+    redirect("/dashboard");
+  }
+
+  // Use service client to bypass RLS for admin operations
+  const supabase = createServiceClient();
 
   // Build query
   let query = supabase
