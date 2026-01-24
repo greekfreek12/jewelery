@@ -109,3 +109,68 @@ CSS classes defined in `globals.css`:
 - $297/month via Stripe
 - 14-day free trial
 - Feature flags for upsells (AI responses, campaigns)
+
+## Supabase Patterns (IMPORTANT)
+
+### Client Types - Use the Right One
+
+| Client | Location | When to Use |
+|--------|----------|-------------|
+| `createClient()` | `src/lib/supabase/server.ts` | Server Components with user session (respects RLS) |
+| `createServiceClient()` | `src/lib/supabase/server.ts` | Admin pages, bypasses RLS |
+| `createApiClient()` | `src/lib/supabase/api-client.ts` | API routes with user session |
+| `createApiServiceClient()` | `src/lib/supabase/api-client.ts` | Webhooks, admin APIs (no session, bypasses RLS) |
+
+### RLS (Row Level Security) Rules
+- `contractors` table: Users can only see their own row (`auth.uid() = id`)
+- Admin override: Use `createServiceClient()` to bypass RLS entirely
+- Webhooks have NO user session - always use service client
+
+### Admin Page Pattern
+```typescript
+// 1. Check auth with regular client
+const authClient = await createClient();
+const { data: { user } } = await authClient.auth.getUser();
+if (!user) redirect("/login");
+
+// 2. Check admin status
+const { data: currentUser } = await authClient
+  .from("contractors")
+  .select("is_admin")
+  .eq("id", user.id)
+  .single() as { data: { is_admin: boolean } | null };
+
+if (!currentUser?.is_admin) redirect("/dashboard");
+
+// 3. Use service client for actual operations
+const supabase = createServiceClient();
+const { data } = await supabase.from("contractors").select("*"); // Gets ALL
+```
+
+### TypeScript "never" Type Fix
+When Supabase returns `never` type, cast the result:
+```typescript
+const { data } = await supabase
+  .from("contractors")
+  .select("is_admin")
+  .eq("id", id)
+  .single() as { data: { is_admin: boolean } | null };
+```
+
+### Database Types
+- Generated types in `src/types/database.ts`
+- Re-run `supabase gen types typescript` after schema changes
+
+## Admin Panel Structure
+
+Admin pages are in `src/app/(admin)/admin/`:
+- `/admin` - Dashboard with stats
+- `/admin/contractors` - List all contractors
+- `/admin/contractors/[id]` - Contractor detail (tabbed: Overview, Settings, Phone, Billing, Activity)
+
+Admin API endpoints in `src/app/api/admin/contractors/[id]/`:
+- `route.ts` - GET, PUT, DELETE contractor
+- `provision-phone/` - Phone number provisioning
+- `extend-trial/` - Extend trial period
+- `suspend/` - Suspend/unsuspend account
+- `impersonate/` - Generate magic link login
