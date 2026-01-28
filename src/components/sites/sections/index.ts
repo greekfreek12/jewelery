@@ -1,0 +1,11 @@
+export { HeaderSection } from "./HeaderSection";
+export { HeroSection } from "./HeroSection";
+export { TrustBadgesSection } from "./TrustBadgesSection";
+export { ServicesSection } from "./ServicesSection";
+export { AboutSection } from "./AboutSection";
+export { ReviewsSection } from "./ReviewsSection";
+export { GallerySection } from "./GallerySection";
+export { ServiceAreaSection } from "./ServiceAreaSection";
+export { ContactFormSection } from "./ContactFormSection";
+export { CTASection } from "./CTASection";
+export { FooterSection } from "./FooterSection";

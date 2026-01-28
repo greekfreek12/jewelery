@@ -125,17 +125,25 @@ export async function POST(
       // Build absolute URL for status callback (TextGrid needs full URL)
       const baseUrl = getWebhookBaseUrl();
       const statusCallbackUrl = `${baseUrl}/api/textgrid/voice/status?contractorId=${contractor.id}`;
+      const pressToAcceptEnabled = process.env.TEXTGRID_PRESS_TO_ACCEPT === "true";
+      const numberUrl = pressToAcceptEnabled
+        ? `${baseUrl}/api/textgrid/voice/whisper?contractorId=${contractor.id}`
+        : undefined;
 
       const twiml = forwardCallTwiml(
         contractor.forwarding_number,
         from,  // Show original caller ID to contractor (not business number)
         12,   // Very short timeout - MUST end before carrier voicemail (~20-25 sec)
-        statusCallbackUrl  // Absolute URL for TextGrid callback
+        statusCallbackUrl,  // Absolute URL for TextGrid callback
+        numberUrl
       );
 
       console.log("=== VOICE WEBHOOK DEBUG ===");
       console.log("Forwarding to:", contractor.forwarding_number);
       console.log("Status callback URL:", statusCallbackUrl);
+      if (pressToAcceptEnabled) {
+        console.log("Press-to-accept enabled:", numberUrl);
+      }
       console.log("TwiML response:", twiml);
       console.log("===========================");
 

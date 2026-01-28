@@ -144,6 +144,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const pressToAcceptEnabled = process.env.TEXTGRID_PRESS_TO_ACCEPT === "true";
+    if (pressToAcceptEnabled && callSid) {
+      const { data: accepted } = await supabase
+        .from("analytics_events")
+        .select("id")
+        .eq("contractor_id", contractor.id)
+        .eq("event_type", "call_press_accept")
+        .contains("metadata", { call_sid: callSid, digits: "1" })
+        .limit(1);
+
+      if (accepted && accepted.length > 0) {
+        console.log(`Call accepted via press-1 (callSid: ${callSid}), skipping missed-call text`);
+        return new NextResponse(emptyTwiml(), {
+          headers: { "Content-Type": "text/xml" },
+        });
+      }
+    }
+
     // Log missed call with duration info
     await supabase.from("analytics_events").insert({
       contractor_id: contractor.id,

@@ -113,7 +113,8 @@ export function forwardCallTwiml(
   forwardingNumber: string,
   callerId?: string,
   timeout: number = 30,
-  statusCallbackUrl?: string
+  statusCallbackUrl?: string,
+  numberUrl?: string
 ): string {
   const callerIdAttr = callerId ? ` callerId="${callerId}"` : "";
   const actionAttr = statusCallbackUrl
@@ -124,10 +125,11 @@ export function forwardCallTwiml(
   const numberStatusCallback = statusCallbackUrl
     ? ` statusCallback="${statusCallbackUrl}" statusCallbackEvent="initiated ringing answered completed" statusCallbackMethod="POST"`
     : "";
+  const numberUrlAttr = numberUrl ? ` url="${numberUrl}"` : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial${callerIdAttr} timeout="${timeout}"${actionAttr}>
-    <Number${numberStatusCallback}>${forwardingNumber}</Number>
+    <Number${numberStatusCallback}${numberUrlAttr}>${forwardingNumber}</Number>
   </Dial>
 </Response>`;
 }
