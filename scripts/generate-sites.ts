@@ -13,9 +13,16 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Default site config
+// Get full-size logo URL (Google uses s44 for tiny thumbnails)
+const getFullSizeLogo = (logoUrl: string | null): string | null => {
+  if (!logoUrl) return null;
+  return logoUrl.replace("/s44-", "/s0-");
+};
+
 const createSiteConfig = (lead: any) => {
   const reviews = lead.google_reviews || [];
   const photos = lead.google_photos || [];
+  const logoUrl = getFullSizeLogo(lead.logo);
 
   // Pick up to 6 reviews with 4+ stars
   const featuredReviews = reviews
@@ -71,7 +78,8 @@ const createSiteConfig = (lead: any) => {
         enabled: true,
         order: 0,
         content: {
-          show_logo: true,
+          show_logo: !!logoUrl,
+          logo_url: logoUrl,
           cta_text: "Call Now",
         },
       },
@@ -248,12 +256,19 @@ async function main() {
       phone: lead.phone,
       city: lead.city,
       state: lead.state,
+      category: lead.category,
       place_id: lead.place_id,
       rating: rating || null,
       review_count: reviewCount || null,
       config,
       meta_title: `${lead.name} | ${lead.city}, ${lead.state}`,
       meta_description: `Professional plumbing services in ${lead.city}, ${lead.state}. Call ${lead.name} for fast, reliable service.`,
+      // Social, hours, and reviews link from lead
+      reviews_link: lead.reviews_link || null,
+      facebook_url: lead.facebook || null,
+      instagram_url: lead.instagram || null,
+      working_hours: lead.working_hours || null,
+      is_24_7: lead.working_hours?.toLowerCase().includes("24") || false,
     };
 
     const { error: insertError } = await supabase.from("sites").insert(site);

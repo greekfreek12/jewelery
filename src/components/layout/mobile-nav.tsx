@@ -8,6 +8,7 @@ import {
   Star,
   Settings,
   LayoutDashboard,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Contractor } from "@/types/database";
@@ -19,7 +20,7 @@ interface MobileNavProps {
 const navigation = [
   { name: "Home", href: "/dashboard", icon: LayoutDashboard },
   { name: "Inbox", href: "/inbox", icon: MessageSquare, badge: 3 },
-  { name: "Contacts", href: "/contacts", icon: Users },
+  { name: "Jobs", href: "/jobs", icon: CalendarDays },
   { name: "Reviews", href: "/reviews", icon: Star },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

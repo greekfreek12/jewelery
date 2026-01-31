@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nick's Plumbing | New Orleans' Trusted Plumber Since 1998</title>
+    <meta name="description" content="24/7 Emergency plumbing services in New Orleans and surrounding parishes. Licensed, insured, and locally owned. Call 205-500-5170 now!">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --midnight: #0a1628;
+            --deep-blue: #1a3a5c;
+            --nola-gold: #d4a847;
+            --warm-cream: #f5f0e6;
+            --copper: #b87333;
+            --water-blue: #4a90a4;
+            --rust: #8b4513;
+            --soft-white: #fefdfb;
+            --shadow: rgba(10, 22, 40, 0.15);
+            --shadow-heavy: rgba(10, 22, 40, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--soft-white);
+            color: var(--midnight);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ============================================
+           KEY ANIMATIONS TO PORT TO REACT
+           ============================================ */
+
+        /* Phone icon ring animation - used on header CTA */
+        @keyframes ring {
+            0%, 100% { transform: rotate(0); }
+            10%, 30% { transform: rotate(-10deg); }
+            20%, 40% { transform: rotate(10deg); }
+            50% { transform: rotate(0); }
+        }
+
+        /* Shimmer for buttons - diagonal gradient shift */
+        @keyframes shimmerBtn {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* FadeInUp for hero content */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Emergency banner shimmer sweep */
+        @keyframes shimmer {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(50%); }
+        }
+
+        /* Pulse dot animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* ============================================
+           HEADER CTA BUTTON
+           ============================================ */
+        .header-cta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--nola-gold), var(--copper));
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 168, 71, 0.3);
+        }
+
+        .header-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(212, 168, 71, 0.4);
+        }
+
+        .header-cta svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+            animation: ring 2s infinite;
+        }
+
+        /* ============================================
+           HERO PRIMARY BUTTON
+           ============================================ */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--nola-gold), var(--copper), var(--nola-gold));
+            background-size: 200% 200%;
+            color: white;
+            padding: 18px 36px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 30px rgba(212, 168, 71, 0.4);
+            animation: shimmerBtn 3s ease infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 50px rgba(212, 168, 71, 0.5);
+        }
+
+        /* ============================================
+           HERO SECONDARY BUTTON
+           ============================================ */
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: transparent;
+            color: white;
+            padding: 18px 36px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* ============================================
+           HERO CONTENT - STAGGERED FADE IN
+           ============================================ */
+        .hero h1 {
+            animation: fadeInUp 0.8s ease 0.1s both;
+        }
+
+        .hero-description {
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .hero-buttons {
+            animation: fadeInUp 0.8s ease 0.3s both;
+        }
+
+        /* ============================================
+           EMERGENCY BANNER
+           ============================================ */
+        .emergency-banner {
+            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .emergency-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        .emergency-banner .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* ============================================
+           MOBILE HEADER LAYOUT
+           ============================================ */
+        @media (max-width: 768px) {
+            .emergency-banner {
+                display: none;
+            }
+
+            .header-inner {
+                flex-direction: column;
+                padding: 12px 20px;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .logo-icon {
+                display: none;
+            }
+
+            .logo-name {
+                font-size: 1.5rem;
+            }
+
+            .logo-tagline {
+                display: none;
+            }
+
+            .header-cta {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+                border-radius: 25px;
+            }
+
+            .mobile-toggle {
+                display: flex;
+                position: absolute;
+                right: 15px;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+        }
+
+        /* ============================================
+           NAV LINK UNDERLINE ANIMATION
+           ============================================ */
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--nola-gold);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--deep-blue);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Reference file - see full HTML in original -->
+</body>
+</html>

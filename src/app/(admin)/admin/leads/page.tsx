@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import Link from "next/link";
+import LeadDetailModal from "@/components/admin/LeadDetailModal";
 
 interface Lead {
   id: string;
@@ -55,6 +55,9 @@ export default function LeadsPage() {
 
   // Selection
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Modal
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
   const fetchLeads = useCallback(async () => {
     const res = await fetch("/api/admin/leads");
@@ -449,6 +452,13 @@ export default function LeadsPage() {
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setSelectedLeadId(lead.id)}
+                          className="px-2 py-1 text-xs bg-zinc-900 text-white hover:bg-zinc-700 rounded font-medium"
+                          title="View photos & reviews"
+                        >
+                          View
+                        </button>
                         {lead.site_slug && (
                           <a
                             href={`/s/${lead.site_slug}`}
@@ -545,6 +555,12 @@ export default function LeadsPage() {
           </div>
         )}
       </div>
+
+      {/* Lead Detail Modal */}
+      <LeadDetailModal
+        leadId={selectedLeadId}
+        onClose={() => setSelectedLeadId(null)}
+      />
     </>
   );
 }

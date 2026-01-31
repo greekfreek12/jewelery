@@ -1,0 +1,11 @@
+export { NicksHeaderSection } from "./HeaderSection";
+export { NicksHeroSection } from "./HeroSection";
+export { NicksServicesSection } from "./ServicesSection";
+export { NicksServicesWithImagesSection } from "./ServicesWithImagesSection";
+export { NicksWhyChooseUsSection } from "./WhyChooseUsSection";
+export { NicksAboutSection } from "./AboutSection";
+export { NicksGallerySection } from "./GallerySection";
+export { NicksReviewsSection } from "./ReviewsSection";
+export { NicksServiceAreaSection } from "./ServiceAreaSection";
+export { NicksContactSection } from "./ContactSection";
+export { NicksFooterSection } from "./FooterSection";

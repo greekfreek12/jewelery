@@ -1,0 +1,110 @@
+[
+  {
+    "service": "drain-cleaning",
+    "prompt": "Professional plumber clearing a clogged drain, using drain snake or auger equipment, kitchen or bathroom sink, water flowing freely, clean modern home environment, tools visible, skilled hands at work",
+    "success": true,
+    "imageCount": 10,
+    "filePaths": [
+      "/workspaces/jewelery/public/stock-photos/services/drain-cleaning/01.png",
+      "/workspaces/jewelery/public/stock-photos/services/drain-cleaning/02.png",
+      "/workspaces/jewelery/public/stock-photos/services/drain-cleaning/03.png",
+      "/workspaces/jewelery/public/stock-photos/services/drain-cleaning/04.png",
+      "/workspaces/jewelery/public/stock-photos/services/drain-cleaning/05.png",
+      "/workspaces/jewelery/public/stock-photos/services/drain-cleaning/06.png",
+      "/workspaces/jewelery/public/stock-photos/services/drain-cleaning/07.png",
+      "/workspaces/jewelery/public/stock-photos/services/drain-cleaning/08.png",
+      "/workspaces/jewelery/public/stock-photos/services/drain-cleaning/09.png",
+      "/workspaces/jewelery/public/stock-photos/services/drain-cleaning/10.png"
+    ]
+  },
+  {
+    "service": "water-heater",
+    "prompt": "Professional technician servicing a water heater, residential garage or utility room, tank or tankless unit, copper pipes visible, temperature gauge, maintenance or installation work, clean professional setting",
+    "success": true,
+    "imageCount": 10,
+    "filePaths": [
+      "/workspaces/jewelery/public/stock-photos/services/water-heater/01.png",
+      "/workspaces/jewelery/public/stock-photos/services/water-heater/02.png",
+      "/workspaces/jewelery/public/stock-photos/services/water-heater/03.png",
+      "/workspaces/jewelery/public/stock-photos/services/water-heater/04.png",
+      "/workspaces/jewelery/public/stock-photos/services/water-heater/05.png",
+      "/workspaces/jewelery/public/stock-photos/services/water-heater/06.png",
+      "/workspaces/jewelery/public/stock-photos/services/water-heater/07.png",
+      "/workspaces/jewelery/public/stock-photos/services/water-heater/08.png",
+      "/workspaces/jewelery/public/stock-photos/services/water-heater/09.png",
+      "/workspaces/jewelery/public/stock-photos/services/water-heater/10.png"
+    ]
+  },
+  {
+    "service": "leak-detection",
+    "prompt": "Professional plumber detecting or repairing a water leak, using moisture detector or inspection equipment, under sink or near pipes, water damage visible, focused repair work, residential bathroom or kitchen",
+    "success": true,
+    "imageCount": 10,
+    "filePaths": [
+      "/workspaces/jewelery/public/stock-photos/services/leak-detection/01.png",
+      "/workspaces/jewelery/public/stock-photos/services/leak-detection/02.png",
+      "/workspaces/jewelery/public/stock-photos/services/leak-detection/03.png",
+      "/workspaces/jewelery/public/stock-photos/services/leak-detection/04.png",
+      "/workspaces/jewelery/public/stock-photos/services/leak-detection/05.png",
+      "/workspaces/jewelery/public/stock-photos/services/leak-detection/06.png",
+      "/workspaces/jewelery/public/stock-photos/services/leak-detection/07.png",
+      "/workspaces/jewelery/public/stock-photos/services/leak-detection/08.png",
+      "/workspaces/jewelery/public/stock-photos/services/leak-detection/09.png",
+      "/workspaces/jewelery/public/stock-photos/services/leak-detection/10.png"
+    ]
+  },
+  {
+    "service": "pipe-repair",
+    "prompt": "Professional plumber repairing or replacing pipes, copper or PVC piping, soldering or fitting work, pipe wrench and tools, exposed plumbing, residential repair job, skilled craftsmanship",
+    "success": true,
+    "imageCount": 10,
+    "filePaths": [
+      "/workspaces/jewelery/public/stock-photos/services/pipe-repair/01.png",
+      "/workspaces/jewelery/public/stock-photos/services/pipe-repair/02.png",
+      "/workspaces/jewelery/public/stock-photos/services/pipe-repair/03.png",
+      "/workspaces/jewelery/public/stock-photos/services/pipe-repair/04.png",
+      "/workspaces/jewelery/public/stock-photos/services/pipe-repair/05.png",
+      "/workspaces/jewelery/public/stock-photos/services/pipe-repair/06.png",
+      "/workspaces/jewelery/public/stock-photos/services/pipe-repair/07.png",
+      "/workspaces/jewelery/public/stock-photos/services/pipe-repair/08.png",
+      "/workspaces/jewelery/public/stock-photos/services/pipe-repair/09.png",
+      "/workspaces/jewelery/public/stock-photos/services/pipe-repair/10.png"
+    ]
+  },
+  {
+    "service": "fixture-installation",
+    "prompt": "Professional plumber installing bathroom or kitchen fixtures, new faucet toilet or sink, chrome fixtures, supply line connections, modern bathroom or kitchen renovation, quality installation work",
+    "success": true,
+    "imageCount": 10,
+    "filePaths": [
+      "/workspaces/jewelery/public/stock-photos/services/fixture-installation/01.png",
+      "/workspaces/jewelery/public/stock-photos/services/fixture-installation/02.png",
+      "/workspaces/jewelery/public/stock-photos/services/fixture-installation/03.png",
+      "/workspaces/jewelery/public/stock-photos/services/fixture-installation/04.png",
+      "/workspaces/jewelery/public/stock-photos/services/fixture-installation/05.png",
+      "/workspaces/jewelery/public/stock-photos/services/fixture-installation/06.png",
+      "/workspaces/jewelery/public/stock-photos/services/fixture-installation/07.png",
+      "/workspaces/jewelery/public/stock-photos/services/fixture-installation/08.png",
+      "/workspaces/jewelery/public/stock-photos/services/fixture-installation/09.png",
+      "/workspaces/jewelery/public/stock-photos/services/fixture-installation/10.png"
+    ]
+  },
+  {
+    "service": "emergency-plumbing",
+    "prompt": "Emergency plumbing situation, plumber responding urgently, burst pipe or flooding, water shutoff, nighttime or urgent scenario, professional rapid response, residential emergency repair",
+    "success": true,
+    "imageCount": 10,
+    "filePaths": [
+      "/workspaces/jewelery/public/stock-photos/services/emergency-plumbing/01.png",
+      "/workspaces/jewelery/public/stock-photos/services/emergency-plumbing/02.png",
+      "/workspaces/jewelery/public/stock-photos/services/emergency-plumbing/03.png",
+      "/workspaces/jewelery/public/stock-photos/services/emergency-plumbing/04.png",
+      "/workspaces/jewelery/public/stock-photos/services/emergency-plumbing/05.png",
+      "/workspaces/jewelery/public/stock-photos/services/emergency-plumbing/06.png",
+      "/workspaces/jewelery/public/stock-photos/services/emergency-plumbing/07.png",
+      "/workspaces/jewelery/public/stock-photos/services/emergency-plumbing/08.png",
+      "/workspaces/jewelery/public/stock-photos/services/emergency-plumbing/09.png",
+      "/workspaces/jewelery/public/stock-photos/services/emergency-plumbing/10.png"
+    ]
+  }
+]

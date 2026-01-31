@@ -12,6 +12,7 @@ import {
   Phone,
   Zap,
   BarChart3,
+  CalendarDays,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Contractor } from "@/types/database";
@@ -24,6 +25,7 @@ interface SidebarProps {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Inbox", href: "/inbox", icon: MessageSquare, badge: true },
+  { name: "Jobs", href: "/jobs", icon: CalendarDays },
   { name: "Contacts", href: "/contacts", icon: Users },
   { name: "Reviews", href: "/reviews", icon: Star },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },

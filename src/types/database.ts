@@ -15,6 +15,28 @@ export type ReviewRequestStatus = "sent" | "reminded_1" | "reminded_2" | "replie
 export type ReviewCampaignStatus = "draft" | "sending" | "completed" | "paused";
 export type ContactSource = "sms" | "call" | "form" | "import" | "manual";
 
+// Job types
+export type JobTimeType = "window" | "timeofday" | "exact";
+export type JobTimeOfDay = "morning" | "afternoon" | "allday";
+export type JobDuration = "30min" | "1hr" | "2hr" | "3hr" | "4hr" | "half_day" | "full_day";
+export type JobStatus = "scheduled" | "en_route" | "in_progress" | "completed" | "cancelled";
+export type JobManagementType = "jobber" | "housecallpro" | "servicetitan" | "quickbooks" | "other_zapier" | "builtin";
+
+// Customer lead types
+export type CustomerLeadSource = "chat" | "form" | "manual" | "referral" | "phone" | "other";
+export type CustomerLeadStatus = "new" | "contacted" | "booked" | "lost";
+
+// Job settings
+export interface JobSettings {
+  notifications: {
+    send_confirmation: boolean;
+    send_day_before_reminder: boolean;
+    send_en_route: boolean;
+    send_cancellation: boolean;
+  };
+  review_delay_hours: number;
+}
+
 export interface ContractorTemplates {
   missed_call: {
     enabled: boolean;
@@ -380,6 +402,133 @@ export interface Database {
           metadata?: Json;
         };
       };
+      jobs: {
+        Row: {
+          id: string;
+          contractor_id: string;
+          contact_id: string | null;
+          customer_lead_id: string | null;
+          service_type: string | null;
+          notes: string | null;
+          scheduled_date: string;
+          time_type: JobTimeType;
+          window_start: string | null;
+          window_end: string | null;
+          time_of_day: JobTimeOfDay | null;
+          estimated_duration: JobDuration | null;
+          address_override: string | null;
+          status: JobStatus;
+          created_at: string;
+          updated_at: string;
+          en_route_at: string | null;
+          started_at: string | null;
+          completed_at: string | null;
+          cancelled_at: string | null;
+          review_request_id: string | null;
+          review_requested_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          contractor_id: string;
+          contact_id?: string | null;
+          customer_lead_id?: string | null;
+          service_type?: string | null;
+          notes?: string | null;
+          scheduled_date: string;
+          time_type?: JobTimeType;
+          window_start?: string | null;
+          window_end?: string | null;
+          time_of_day?: JobTimeOfDay | null;
+          estimated_duration?: JobDuration | null;
+          address_override?: string | null;
+          status?: JobStatus;
+          created_at?: string;
+          updated_at?: string;
+          en_route_at?: string | null;
+          started_at?: string | null;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+          review_request_id?: string | null;
+          review_requested_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          contractor_id?: string;
+          contact_id?: string | null;
+          customer_lead_id?: string | null;
+          service_type?: string | null;
+          notes?: string | null;
+          scheduled_date?: string;
+          time_type?: JobTimeType;
+          window_start?: string | null;
+          window_end?: string | null;
+          time_of_day?: JobTimeOfDay | null;
+          estimated_duration?: JobDuration | null;
+          address_override?: string | null;
+          status?: JobStatus;
+          created_at?: string;
+          updated_at?: string;
+          en_route_at?: string | null;
+          started_at?: string | null;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+          review_request_id?: string | null;
+          review_requested_at?: string | null;
+        };
+      };
+      customer_leads: {
+        Row: {
+          id: string;
+          contractor_id: string;
+          name: string;
+          phone: string;
+          email: string | null;
+          service_type: string | null;
+          source: CustomerLeadSource | null;
+          notes: string | null;
+          status: CustomerLeadStatus;
+          converted_to_contact_id: string | null;
+          converted_to_job_id: string | null;
+          created_at: string;
+          updated_at: string;
+          contacted_at: string | null;
+          converted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          contractor_id: string;
+          name: string;
+          phone: string;
+          email?: string | null;
+          service_type?: string | null;
+          source?: CustomerLeadSource | null;
+          notes?: string | null;
+          status?: CustomerLeadStatus;
+          converted_to_contact_id?: string | null;
+          converted_to_job_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          contacted_at?: string | null;
+          converted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          contractor_id?: string;
+          name?: string;
+          phone?: string;
+          email?: string | null;
+          service_type?: string | null;
+          source?: CustomerLeadSource | null;
+          notes?: string | null;
+          status?: CustomerLeadStatus;
+          converted_to_contact_id?: string | null;
+          converted_to_job_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          contacted_at?: string | null;
+          converted_at?: string | null;
+        };
+      };
     };
     Views: {};
     Functions: {};
@@ -423,3 +572,11 @@ export type ReviewCampaignUpdate = Database["public"]["Tables"]["review_campaign
 
 export type AnalyticsEvent = Database["public"]["Tables"]["analytics_events"]["Row"];
 export type AnalyticsEventInsert = Database["public"]["Tables"]["analytics_events"]["Insert"];
+
+export type Job = Database["public"]["Tables"]["jobs"]["Row"];
+export type JobInsert = Database["public"]["Tables"]["jobs"]["Insert"];
+export type JobUpdate = Database["public"]["Tables"]["jobs"]["Update"];
+
+export type CustomerLead = Database["public"]["Tables"]["customer_leads"]["Row"];
+export type CustomerLeadInsert = Database["public"]["Tables"]["customer_leads"]["Insert"];
+export type CustomerLeadUpdate = Database["public"]["Tables"]["customer_leads"]["Update"];

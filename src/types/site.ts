@@ -10,6 +10,10 @@ export interface GlobalConfig {
   accent_color: string;
   font_heading: string;
   font_body: string;
+  template?: "classic" | "nicks";
+  // Optional color overrides for nicks template
+  header_bar_color?: string;
+  header_bar_text_color?: string;
 }
 
 export interface SectionConfig {
@@ -26,6 +30,7 @@ export type SectionType =
   | "hero"
   | "trust_badges"
   | "services"
+  | "why_choose_us"
   | "about"
   | "reviews"
   | "gallery"
@@ -60,6 +65,8 @@ export interface HeroContent {
   cta_secondary_text?: string;
   cta_secondary_link?: string;
   show_rating?: boolean;
+  // Nicks template fields
+  hero_city?: string;
 }
 
 export interface TrustBadgesContent {
@@ -135,9 +142,13 @@ export interface CTAContent {
 }
 
 export interface HeaderContent {
-  show_logo?: boolean;
   nav_links?: Array<{ label: string; href: string }>;
   cta_text?: string;
+  logo_url?: string;
+  // Nicks template fields
+  show_top_bar?: boolean;
+  top_bar_text?: string;
+  tagline?: string;
 }
 
 export interface FooterContent {
@@ -161,12 +172,19 @@ export interface Site {
   phone: string | null;
   city: string | null;
   state: string | null;
+  category: string | null;
   place_id: string | null;
   rating: number | null;
   review_count: number | null;
   config: SiteConfig;
   meta_title: string | null;
   meta_description: string | null;
+  // Social links and hours
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  working_hours?: string | null;
+  is_24_7?: boolean;
+  reviews_link?: string | null;
 }
 
 // Props passed to section components

@@ -7,14 +7,11 @@ interface PageProps {
   params: { slug: string };
 }
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function SitePage({ params }: PageProps) {
   const { slug } = params;
-
-  // Handle demo route separately
-  if (slug === "demo") {
-    const { default: DemoPage } = await import("../demo/page");
-    return <DemoPage />;
-  }
 
   const supabase = createServiceClient();
 
@@ -42,12 +39,19 @@ export default async function SitePage({ params }: PageProps) {
     phone: siteData.phone,
     city: siteData.city,
     state: siteData.state,
+    category: siteData.category,
     place_id: siteData.place_id,
     rating: siteData.rating,
     review_count: siteData.review_count,
     config: siteData.config as SiteConfig,
     meta_title: siteData.meta_title,
     meta_description: siteData.meta_description,
+    // Social/hours fields
+    facebook_url: siteData.facebook_url,
+    instagram_url: siteData.instagram_url,
+    working_hours: siteData.working_hours,
+    is_24_7: siteData.is_24_7,
+    reviews_link: siteData.reviews_link,
   };
 
   return <SiteRenderer site={site} />;
@@ -55,13 +59,6 @@ export default async function SitePage({ params }: PageProps) {
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = params;
-
-  if (slug === "demo") {
-    return {
-      title: "Demo Site | Contractor Website",
-      description: "Demo contractor website template",
-    };
-  }
 
   const supabase = createServiceClient();
 

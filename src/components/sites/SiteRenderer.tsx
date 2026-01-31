@@ -2,33 +2,38 @@
 
 import type { Site, SiteConfig, SectionType, GlobalConfig } from "@/types/site";
 import {
-  HeaderSection,
-  HeroSection,
-  TrustBadgesSection,
-  ServicesSection,
-  AboutSection,
-  ReviewsSection,
-  GallerySection,
-  ServiceAreaSection,
-  ContactFormSection,
-  CTASection,
-  FooterSection,
-} from "./sections";
+  NicksHeaderSection,
+  NicksHeroSection,
+  NicksServicesWithImagesSection,
+  NicksWhyChooseUsSection,
+  NicksAboutSection,
+  NicksGallerySection,
+  NicksReviewsSection,
+  NicksServiceAreaSection,
+  NicksContactSection,
+  NicksFooterSection,
+} from "./templates/nicks";
 import { ChatWidget } from "./ChatWidget";
 
-// Section component registry
+// Placeholder for sections not yet built
+function PlaceholderSection({ content, globalConfig, businessData }: any) {
+  return null; // Will be replaced as we build each section
+}
+
+// Nicks template - all sections built
 const SECTION_COMPONENTS: Record<SectionType, React.ComponentType<any>> = {
-  header: HeaderSection,
-  hero: HeroSection,
-  trust_badges: TrustBadgesSection,
-  services: ServicesSection,
-  about: AboutSection,
-  reviews: ReviewsSection,
-  gallery: GallerySection,
-  service_area: ServiceAreaSection,
-  contact_form: ContactFormSection,
-  cta: CTASection,
-  footer: FooterSection,
+  header: NicksHeaderSection,
+  hero: NicksHeroSection,
+  trust_badges: PlaceholderSection,
+  services: NicksServicesWithImagesSection,
+  why_choose_us: NicksWhyChooseUsSection,
+  about: NicksAboutSection,
+  reviews: NicksReviewsSection,
+  gallery: NicksGallerySection,
+  service_area: NicksServiceAreaSection,
+  contact_form: NicksContactSection,
+  cta: PlaceholderSection,
+  footer: NicksFooterSection,
 };
 
 interface SiteRendererProps {
@@ -46,6 +51,13 @@ export function SiteRenderer({ site }: SiteRendererProps) {
     state: site.state,
     rating: site.rating,
     review_count: site.review_count,
+    // Optional fields for footer/contact/reviews
+    facebook_url: site.facebook_url,
+    instagram_url: site.instagram_url,
+    working_hours: site.working_hours,
+    is_24_7: site.is_24_7,
+    category: site.category,
+    reviews_link: site.reviews_link,
   };
 
   // Sort sections by order if specified
@@ -57,7 +69,7 @@ export function SiteRenderer({ site }: SiteRendererProps) {
     <div
       className="min-h-screen"
       style={{
-        backgroundColor: "#0C1117",
+        backgroundColor: "#faf9f7", // Warm off-white
         ["--primary" as string]: globalConfig.primary_color,
         ["--accent" as string]: globalConfig.accent_color,
       }}
@@ -100,24 +112,24 @@ export function SiteRenderer({ site }: SiteRendererProps) {
   );
 }
 
-// Default config for new sites - Industrial Refined theme
+// Default config for new sites - Nick's template
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
   global: {
-    primary_color: "#0C1117",
-    accent_color: "#C97D4A",
-    font_heading: "Archivo Black",
-    font_body: "IBM Plex Sans",
+    primary_color: "#1e293b",
+    accent_color: "#ea580c",
+    font_heading: "Outfit",
+    font_body: "DM Sans",
+    template: "nicks",
   },
   sections: [
     { id: "header", type: "header", enabled: true, order: 0, content: {} },
     { id: "hero", type: "hero", enabled: true, order: 1, content: {} },
-    { id: "trust_badges", type: "trust_badges", enabled: true, order: 2, content: {} },
+    { id: "about", type: "about", enabled: true, order: 2, content: {} },
     { id: "services", type: "services", enabled: true, order: 3, content: {} },
-    { id: "about", type: "about", enabled: true, order: 4, content: {} },
-    { id: "reviews", type: "reviews", enabled: true, order: 5, content: {} },
-    { id: "gallery", type: "gallery", enabled: true, order: 6, content: {} },
-    { id: "service_area", type: "service_area", enabled: true, order: 7, content: {} },
-    { id: "contact_form", type: "contact_form", enabled: true, order: 8, content: {} },
-    { id: "footer", type: "footer", enabled: true, order: 9, content: {} },
+    { id: "reviews", type: "reviews", enabled: true, order: 4, content: {} },
+    { id: "gallery", type: "gallery", enabled: true, order: 5, content: {} },
+    { id: "service_area", type: "service_area", enabled: true, order: 6, content: {} },
+    { id: "contact_form", type: "contact_form", enabled: true, order: 7, content: {} },
+    { id: "footer", type: "footer", enabled: true, order: 8, content: {} },
   ],
 };
